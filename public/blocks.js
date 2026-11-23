@@ -1039,6 +1039,7 @@
         ['lmeta', 'Leads Meta', c => c.leads_meta, S.fInt],
         ['cplm', 'CPL Meta', c => divR(c.gasto, c.leads_meta), S.fBRL, true],
         ['lcrm', 'Leads CRM', c => c.leads.length, S.fInt],
+        ['cplc', 'CPL CRM', c => divR(c.gasto, c.leads.length), S.fBRL, true],
         ['ag', 'Agendadas', c => c.calls.length, S.fInt],
         ['re', 'Realizadas', c => c.reais.length, S.fInt],
         ['vd', 'Vendas', c => c.vend.length, S.fInt],
@@ -1056,8 +1057,8 @@
       const tw = E('div', 'sr-tw sr-rkcri'), tbl = E('table', 'sr-t');
       const th = E('thead'), trh = E('tr');
       trh.append(E('th', 'pos', '#'), E('th', '', 'Criativo'));
-      COLS_R.forEach(([k, t]) => {
-        const h = E('th', 'n'); const b = E('button', 'sr-ord' + (k === ordR.k ? ' on' : ''), t + (k === ordR.k ? (ordR.dir < 0 ? ' ↓' : ' ↑') : '')); b.type = 'button';
+      COLS_R.forEach(([k, t, , f]) => {
+        const h = E('th', 'n ' + (f === S.fBRL ? 'm' : 'c')); const b = E('button', 'sr-ord' + (k === ordR.k ? ' on' : ''), t + (k === ordR.k ? (ordR.dir < 0 ? ' ↓' : ' ↑') : '')); b.type = 'button';
         h.setAttribute('aria-sort', k === ordR.k ? (ordR.dir < 0 ? 'descending' : 'ascending') : 'none');
         b.addEventListener('click', () => { const menorMelhor = !!(COLS_R.find(c => c[0] === k) || [])[4]; st.ordR = { k, dir: k === ordR.k ? -ordR.dir : (menorMelhor ? 1 : -1) }; dash.draw('anuncios'); });
         h.appendChild(b); trh.appendChild(h);
@@ -1071,7 +1072,7 @@
         const tx = E('span', 'tx'); tx.append(E('b', '', c.nome), E('small', '', (c.gestor || SEM_GEST) + ' · ' + ([...c.campanhas][0] || '')));
         bt.append(mini, tx); tdn.appendChild(bt);
         tr.append(E('td', 'pos', String(i + 1)), tdn);
-        COLS_R.forEach(([k, , v, f]) => { const x = v(c); tr.appendChild(E('td', 'n' + (k === ordR.k ? ' on' : ''), x == null ? '—' : f(x))); });
+        COLS_R.forEach(([k, , v, f]) => { const x = v(c); tr.appendChild(E('td', 'n ' + (f === S.fBRL ? 'm' : 'c') + (k === ordR.k ? ' on' : ''), x == null ? '—' : f(x))); });
         tbr.appendChild(tr);
       });
       tbl.appendChild(tbr); tw.appendChild(tbl); box.appendChild(tw);
