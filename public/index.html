@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123h">
+<link rel="stylesheet" href="fonts.css?v=20261123k">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -183,9 +183,25 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 .sr-hm td.nome .sr-plink{all:unset;cursor:pointer;color:var(--txt);font:inherit;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 .sr-hm td.nome .sr-plink:hover{color:var(--azul);text-decoration:underline}
 .sr-hm td.nome .sr-plink:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
+
+#anuncios .sr-rkcri{overflow-x:auto}
+#anuncios .sr-rkcri td.cri{min-width:280px;max-width:380px}
+#anuncios .sr-crib{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;min-width:0}
+#anuncios .sr-crib:focus-visible{outline:2px solid var(--azul);outline-offset:2px;border-radius:8px}
+#anuncios .sr-crib .mini{flex:0 0 auto;width:44px;height:44px;border-radius:8px;overflow:hidden;background:var(--azul08)}
+#anuncios .sr-crib .mini img{width:100%;height:100%;object-fit:cover;display:block}
+#anuncios .sr-crib .tx{display:flex;flex-direction:column;min-width:0}
+#anuncios .sr-crib .tx b{font-size:13px;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#anuncios .sr-crib:hover .tx b{color:var(--azul);text-decoration:underline}
+#anuncios .sr-crib .tx small{font-size:11.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#anuncios .sr-rkcri td.n{white-space:nowrap;font-variant-numeric:tabular-nums}
+#anuncios .sr-rkcri td.n.on{font-weight:800;color:var(--txt)}
+#anuncios .sr-ord{all:unset;cursor:pointer;white-space:nowrap}
+#anuncios .sr-ord.on{color:var(--azul);font-weight:800}
+#anuncios .sr-ord:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123h"></script>
+<script src="runtime.js?v=20261123k"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1192,8 +1208,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123h"></script>
-<script src="xlsx.js?v=20261123h"></script>
+<script src="config.js?v=20261123k"></script>
+<script src="xlsx.js?v=20261123k"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1315,8 +1331,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123h"></script>
-<script src="blocks.js?v=20261123h"></script>
+<script src="app.js?v=20261123k"></script>
+<script src="blocks.js?v=20261123k"></script>
 
 </div>
 </body>

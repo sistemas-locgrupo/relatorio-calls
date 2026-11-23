@@ -842,13 +842,20 @@
       .then(j => { if (m.chave !== chave) return; if (j.ok) { m.estado = 'ok'; m.dados = j; } else { m.estado = j.conectado === false ? 'desconectado' : 'erro'; m.erro = j.erro || ''; m.dados = null; } dash.draw('anuncios'); const a = S.st.anuncio; if (a && a._refaz) a._refaz(); })
       .catch(() => { if (m.chave !== chave) return; m.estado = 'indisponivel'; m.dados = null; dash.draw('anuncios'); const a = S.st.anuncio; if (a && a._refaz) a._refaz(); });
   }
-  /* liga cada anúncio a um gestor: pela conta (META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
+  /* conta de anúncio do Meta → gestor. Todo anúncio dessas contas vai para o gestor, com ou sem lead no CRM.
+     Para incluir outra conta, acrescente uma linha com o nome da conta como aparece no Business Manager. */
+  const CONTAS_GESTOR = [
+    ['C1 - ATIVA - LOCAGORA', 'Rei do Tráfego']
+  ];
+  const MAPA_CONTA = new Map(CONTAS_GESTOR.map(([c, g]) => [String(c).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(), g]));
+  /* liga cada anúncio a um gestor: pela conta (tabela acima ou META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
   function metaPorGestor(B) {
     const j = S.st.meta.dados; if (!j) return null;
     const D = S.dados(), voto = new Map();
     (D.leads || []).forEach(l => { marcaGestor(l); const k = normNome(l.utm_content); if (!k || !l.gestor) return; const v = voto.get(k) || new Map(); v.set(l.gestor, (v.get(l.gestor) || 0) + 1); voto.set(k, v); });
     const gestorDe = a => {
       if (a.gestor_conta) return a.gestor_conta;
+      const pc = MAPA_CONTA.get(normNome(a.conta_nome)); if (pc) return pc;
       const v = voto.get(normNome(a.anuncio)); if (v) return [...v.entries()].sort((x, y) => y[1] - x[1])[0][0];
       const e = campanhaDe(a.campanha) || campanhaDe(a.conjunto); return e ? e.g : SEM_GEST;
     };
@@ -972,7 +979,8 @@
     box.appendChild(topo);
     carregarMeta(B.F);
     const MS = S.st.meta, MG = MS.estado === 'ok' ? metaPorGestor(B) : null;
-    sec('Investimento no Meta' + (st.sel ? ' · ' + st.sel : ''), 'gasto do Meta (Facebook / Instagram) contra os leads, calls e vendas de canal Meta no CRM');
+    const iInv = box.children.length;
+    sec('Investimento por gestor' + (st.sel ? ' · ' + st.sel : ''), 'gasto do Meta (Facebook / Instagram) contra os leads, calls e vendas de canal Meta no CRM');
     if (!MG) {
       const msgs = { carregando: ['Buscando os dados do Meta…', ''], indisponivel: ['Os dados do Meta aparecem só no site do relatório.', 'Esta versão não tem acesso à conta de anúncios.'],
         desconectado: ['O Meta ainda não está conectado.', 'Falta guardar o token do usuário do sistema (META_TOKEN) no Cloudflare.'], erro: ['Não foi possível ler os dados do Meta.', MS.erro], nada: ['Buscando os dados do Meta…', ''] };
@@ -1009,7 +1017,6 @@
       const up = E('button', 'sr-link', 'Atualizar agora'); up.type = 'button'; up.addEventListener('click', () => carregarMeta(B.F, true)); at.appendChild(up);
       box.appendChild(at);
       /* galeria dos criativos do Meta */
-      sec('Criativos do Meta' + (st.sel ? ' de ' + st.sel : ''), 'clique no criativo para ver o vídeo ou a imagem e os números');
       const Lm = so(B.leads, fG), Cm = so(B.calls, fG), Vm = so(B.vend, fG);
       const porCri = (rows) => d3.group(rows, r => normNome(r.utm_content));
       const gL = porCri(Lm), gC = porCri(Cm), gV = porCri(Vm);
@@ -1018,7 +1025,53 @@
         return Object.assign(c, { calls, leads, vend, reais: (gC.get(c._k) || []).filter(r => r._g === 'realizada') });
       }).filter(c => c.gasto > 0 || c.leads.length);
       cards.sort((a, b) => b.calls.length - a.calls.length || b.leads.length - a.leads.length || b.gasto - a.gasto);
-      const totC = cards.length; if (!st.todosMeta) cards = cards.slice(0, 12);
+      /* ranking de criativos: tabela com a miniatura, ordenável por qualquer coluna */
+      const todosCards = cards.slice();
+      const totC = cards.length; if (!st.todosMeta) cards = cards.slice(0, 10);
+      const divR = (a, b) => b > 0 ? a / b : null;
+      const COLS_R = [
+        ['gasto', 'Investimento', c => c.gasto, S.fBRL],
+        ['lmeta', 'Leads Meta', c => c.leads_meta, S.fInt],
+        ['cplm', 'CPL Meta', c => divR(c.gasto, c.leads_meta), S.fBRL, true],
+        ['lcrm', 'Leads CRM', c => c.leads.length, S.fInt],
+        ['ag', 'Agendadas', c => c.calls.length, S.fInt],
+        ['re', 'Realizadas', c => c.reais.length, S.fInt],
+        ['vd', 'Vendas', c => c.vend.length, S.fInt],
+        ['cpc', 'Custo por call', c => divR(c.gasto, c.calls.length), S.fBRL, true],
+        ['cac', 'CAC', c => divR(c.gasto, c.vend.length), S.fBRL, true]
+      ];
+      const ordR = st.ordR || (st.ordR = { k: 'ag', dir: -1 });
+      const colR = COLS_R.find(c => c[0] === ordR.k) || COLS_R[4];
+      const valR = c => { const v = colR[2](c); return v == null ? (ordR.dir < 0 ? -Infinity : Infinity) : v; };
+      const rank = todosCards.slice().sort((a, b) => ordR.dir * (valR(a) - valR(b)) || b.calls.length - a.calls.length || b.gasto - a.gasto);
+      const nRank = st.todosRank ? rank.length : Math.min(20, rank.length);
+      const iRank = box.children.length;
+      sec('Ranking de criativos' + (st.sel ? ' de ' + st.sel : ''), 'clique no título da coluna para ordenar · clique no criativo para abrir');
+      const tw = E('div', 'sr-tw sr-rkcri'), tbl = E('table', 'sr-t');
+      const th = E('thead'), trh = E('tr');
+      trh.append(E('th', 'pos', '#'), E('th', '', 'Criativo'));
+      COLS_R.forEach(([k, t]) => {
+        const h = E('th', 'n'); const b = E('button', 'sr-ord' + (k === ordR.k ? ' on' : ''), t + (k === ordR.k ? (ordR.dir < 0 ? ' ↓' : ' ↑') : '')); b.type = 'button';
+        h.setAttribute('aria-sort', k === ordR.k ? (ordR.dir < 0 ? 'descending' : 'ascending') : 'none');
+        b.addEventListener('click', () => { const menorMelhor = !!(COLS_R.find(c => c[0] === k) || [])[4]; st.ordR = { k, dir: k === ordR.k ? -ordR.dir : (menorMelhor ? 1 : -1) }; dash.draw('anuncios'); });
+        h.appendChild(b); trh.appendChild(h);
+      });
+      th.appendChild(trh); tbl.appendChild(th);
+      const tbr = E('tbody');
+      rank.slice(0, nRank).forEach((c, i) => {
+        const tr = E('tr'), tdn = E('td', 'cri');
+        const bt = E('button', 'sr-crib'); bt.type = 'button'; bt.title = 'Ver o criativo e os números'; bt.addEventListener('click', () => abrirAnuncio(c));
+        const mini = E('span', 'mini'); if (c.thumb) { const im = E('img'); im.src = c.thumb; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; mini.appendChild(im); }
+        const tx = E('span', 'tx'); tx.append(E('b', '', c.nome), E('small', '', (c.gestor || SEM_GEST) + ' · ' + ([...c.campanhas][0] || '')));
+        bt.append(mini, tx); tdn.appendChild(bt);
+        tr.append(E('td', 'pos', String(i + 1)), tdn);
+        COLS_R.forEach(([k, , v, f]) => { const x = v(c); tr.appendChild(E('td', 'n' + (k === ordR.k ? ' on' : ''), x == null ? '—' : f(x))); });
+        tbr.appendChild(tr);
+      });
+      tbl.appendChild(tbr); tw.appendChild(tbl); box.appendChild(tw);
+      if (rank.length > 20) { const mb = E('button', 'sr-link', st.todosRank ? 'Mostrar só os 20 primeiros' : `Mostrar todos os ${S.fInt(rank.length)} criativos`); mb.type = 'button'; mb.addEventListener('click', () => { st.todosRank = !st.todosRank; dash.draw('anuncios'); }); box.appendChild(mb); }
+      const iVit = box.children.length;
+      sec('Vitrine dos criativos' + (st.sel ? ' de ' + st.sel : ''), 'os que mais agendaram calls · clique para ver o vídeo e os números');
       const gal = E('div', 'sr-gal');
       cards.forEach((c, i) => {
         const cd = E('article', 'sr-cri');
@@ -1037,7 +1090,10 @@
         corpo.appendChild(dl); cd.append(fig, corpo); gal.appendChild(cd);
       });
       if (cards.length) box.appendChild(gal); else box.appendChild(E('div', 'sr-empty', 'Nenhum anúncio com gasto no período.'));
-      if (totC > 12) { const mb = E('button', 'sr-link', st.todosMeta ? 'Mostrar só os 12 melhores' : `Mostrar todos os ${S.fInt(totC)} criativos do Meta`); mb.type = 'button'; mb.addEventListener('click', () => { st.todosMeta = !st.todosMeta; dash.draw('anuncios'); }); box.appendChild(mb); }
+      if (totC > 10) { const mb = E('button', 'sr-link', st.todosMeta ? 'Mostrar só os 10 melhores' : `Mostrar todos os ${S.fInt(totC)} criativos do Meta`); mb.type = 'button'; mb.addEventListener('click', () => { st.todosMeta = !st.todosMeta; dash.draw('anuncios'); }); box.appendChild(mb); }
+      /* ordem na tela: vitrine, ranking e, por último, o investimento por gestor */
+      const kids = [...box.children];
+      box.append(...kids.slice(iVit), ...kids.slice(iRank, iVit), ...kids.slice(iInv, iRank));
     }
     el.replaceChildren(box);
   });
