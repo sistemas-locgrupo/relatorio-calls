@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123g">
+<link rel="stylesheet" href="fonts.css?v=20261123h">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -178,9 +178,14 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 .sr-akpi .it .v.sr-plink{all:unset;cursor:pointer;font-weight:800;font-size:13.5px;color:var(--azul)}
 .sr-akpi .it .v.sr-plink:hover{text-decoration:underline}
 @media (max-width:640px){.sr-akpi{grid-template-columns:repeat(2,minmax(0,1fr))}.sr-amidia iframe{height:520px}}
+
+.sr-abox .sr-metainfo{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px dashed var(--borda);border-radius:12px;font-size:13px;color:var(--txt)}
+.sr-hm td.nome .sr-plink{all:unset;cursor:pointer;color:var(--txt);font:inherit;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.sr-hm td.nome .sr-plink:hover{color:var(--azul);text-decoration:underline}
+.sr-hm td.nome .sr-plink:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123g"></script>
+<script src="runtime.js?v=20261123h"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1187,8 +1192,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123g"></script>
-<script src="xlsx.js?v=20261123g"></script>
+<script src="config.js?v=20261123h"></script>
+<script src="xlsx.js?v=20261123h"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1310,8 +1315,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123g"></script>
-<script src="blocks.js?v=20261123g"></script>
+<script src="app.js?v=20261123h"></script>
+<script src="blocks.js?v=20261123h"></script>
 
 </div>
 </body>

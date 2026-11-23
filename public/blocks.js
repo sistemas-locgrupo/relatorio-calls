@@ -839,8 +839,8 @@
     m.chave = chave; m.estado = 'carregando'; m.erro = '';
     fetch('/api/meta?ini=' + F.a + '&fim=' + F.b + (forcar ? '&atualizar=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
       .then(r => { const tipo = r.headers.get('content-type') || ''; if (!tipo.includes('json')) { if (r.status >= 500) return { ok: false, conectado: true, erro: 'O servidor respondeu com erro ' + r.status + '. Tente de novo em alguns minutos.' }; throw new Error('indisponivel'); } return r.json(); })
-      .then(j => { if (m.chave !== chave) return; if (j.ok) { m.estado = 'ok'; m.dados = j; } else { m.estado = j.conectado === false ? 'desconectado' : 'erro'; m.erro = j.erro || ''; m.dados = null; } dash.draw('anuncios'); })
-      .catch(() => { if (m.chave !== chave) return; m.estado = 'indisponivel'; m.dados = null; dash.draw('anuncios'); });
+      .then(j => { if (m.chave !== chave) return; if (j.ok) { m.estado = 'ok'; m.dados = j; } else { m.estado = j.conectado === false ? 'desconectado' : 'erro'; m.erro = j.erro || ''; m.dados = null; } dash.draw('anuncios'); const a = S.st.anuncio; if (a && a._refaz) a._refaz(); })
+      .catch(() => { if (m.chave !== chave) return; m.estado = 'indisponivel'; m.dados = null; dash.draw('anuncios'); const a = S.st.anuncio; if (a && a._refaz) a._refaz(); });
   }
   /* liga cada anúncio a um gestor: pela conta (META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
   function metaPorGestor(B) {
@@ -1044,14 +1044,16 @@
 
   /* ---------- pop-up do criativo: vídeo ou imagem do anúncio + os principais números ---------- */
   S.st.anuDet = S.st.anuDet || {};
-  function abrirAnuncio(c) {
-    S.st.anuncio = c; S.st.anuVolta = document.activeElement;
-    const melhor = c.ids.slice().sort((a, b) => (!!b.thumb - !!a.thumb) || b.gasto - a.gasto)[0];
+  function abrirAnuncio(c, refaz) {
+    S.st.anuncio = c; if (!refaz) S.st.anuVolta = document.activeElement;
+    const melhor = (c.ids || []).slice().sort((a, b) => (!!b.thumb - !!a.thumb) || b.gasto - a.gasto)[0];
     c._ad = melhor && melhor.id;
     document.querySelectorAll('[data-draw="anuncio"]').forEach(e => { e.hidden = false; });
     dash.draw('anuncio');
-    const b = document.querySelector('.sr-abox'); if (b) { b.scrollTop = 0; const x = b.querySelector('.sr-pfechar'); if (x) x.focus({ preventScroll: true }); }
-    const p = document.querySelector('[data-draw="anuncio"]'); if (p) { const r = p.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight) window.scrollTo({ top: window.scrollY + r.top }); }
+    if (!refaz) {
+      const b = document.querySelector('.sr-abox'); if (b) { b.scrollTop = 0; const x = b.querySelector('.sr-pfechar'); if (x) x.focus({ preventScroll: true }); }
+      const p = document.querySelector('[data-draw="anuncio"]'); if (p) { const r = p.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight) window.scrollTo({ top: window.scrollY + r.top }); }
+    }
     if (c._ad && !S.st.anuDet[c._ad]) {
       S.st.anuDet[c._ad] = { carregando: true };
       fetch('/api/meta-anuncio?ad=' + encodeURIComponent(c._ad), { credentials: 'same-origin', cache: 'no-store' })
@@ -1060,6 +1062,23 @@
         .catch(() => { S.st.anuDet[c._ad] = { ok: false, erro: 'Não foi possível buscar o criativo.' }; if (S.st.anuncio === c) dash.draw('anuncio'); });
     }
   }
+  S.abrirCriativo = function (nome) {
+    const B = baseGestores(); if (!B) return;
+    const k = normNome(nome), mesmo = r => normNome(r.utm_content) === k;
+    const montar = () => {
+      const calls = B.calls.filter(mesmo), MS = S.st.meta;
+      const MG = MS.estado === 'ok' && MS.chave === B.F.a + '|' + B.F.b ? metaPorGestor(B) : null;
+      const mc = MG && MG.porNome.get(k);
+      const leads = B.leads.filter(mesmo), gest = mc ? mc.gestor : ((leads.find(r => r.gestor) || calls.find(r => r.gestor) || {}).gestor || SEM_GEST);
+      const c = Object.assign({ nome, _k: k, gestor: gest, campanhas: new Set(leads.map(r => r.campanha_gestor || r.utm_campaign).filter(Boolean)), conjuntos: new Set(), ids: [], gasto: 0, leads_meta: 0, impressoes: 0, alcance: 0, cliques: 0, thumb: '', imagem: '', link: '' }, mc || {},
+        { leads, calls: S.umPorLead(calls), reais: calls.filter(r => r._g === 'realizada'), vend: B.vend.filter(mesmo) });
+      c.semMeta = !mc; c.metaEstado = MS.estado; c._refaz = () => { if (S.st.anuncio === c) { abrirAnuncio(montar(), true); } };
+      return c;
+    };
+    carregarMeta(B.F);
+    abrirAnuncio(montar());
+  };
+  const cardMetaPop = t => { const d = E('div', 'sr-metainfo'); d.appendChild(E('b', '', t)); return d; };
   function fecharAnuncio() {
     S.st.anuncio = null;
     document.querySelectorAll('[data-draw="anuncio"]').forEach(e => { e.hidden = true; const v = e.querySelector('video'); if (v) v.pause(); });
@@ -1091,11 +1110,12 @@
       if (det.ok === false && det.erro) corpo.appendChild(E('p', 'sr-hint', 'Não deu para buscar o vídeo: ' + det.erro));
       if (det.ok && (det.titulo || det.texto)) { const t = E('div', 'sr-atexto'); if (det.titulo) t.appendChild(E('b', '', det.titulo)); if (det.texto) t.appendChild(E('p', '', det.texto)); corpo.appendChild(t); }
       /* números */
-      const div = (a, b) => b > 0 ? a / b : null, R = v => v == null ? '—' : S.fBRL(v);
+      if (c.semMeta) corpo.appendChild(cardMetaPop(c.metaEstado === 'carregando' || c.metaEstado === 'nada' ? 'Buscando os dados do Meta…' : c.metaEstado === 'ok' ? 'Este criativo não aparece no Meta no período.' : 'Os dados do Meta aparecem só no site do relatório.'));
+      const div = (a, b) => b > 0 && !c.semMeta ? a / b : null, R = v => v == null ? '—' : S.fBRL(v), MM = v => c.semMeta ? '—' : v;
       const kp = E('div', 'sr-presumo sr-akpi');
       const item = (rot, val, rows, tit, cols) => { const d = E('div', 'it'); d.appendChild(E('span', 'l', rot)); if (rows && rows.length) { const b = E('button', 'v sr-plink', val); b.type = 'button'; b.addEventListener('click', () => S.abrir({ titulo: tit, recorte: ['Criativo: ' + c.nome], rows, kind: 'l', cols })); d.appendChild(b); } else d.appendChild(E('span', 'v', val)); kp.appendChild(d); };
-      item('Investimento', S.fBRL(c.gasto)); item('Impressões', S.fInt(c.impressoes)); item('Alcance', c.alcance ? S.fInt(c.alcance) : '—');
-      item('Cliques no link', S.fInt(c.cliques)); item('CTR', c.impressoes ? S.fP(c.cliques / c.impressoes) : '—'); item('Leads Meta', S.fInt(c.leads_meta));
+      item('Investimento', MM(S.fBRL(c.gasto))); item('Impressões', MM(S.fInt(c.impressoes))); item('Alcance', c.alcance ? MM(S.fInt(c.alcance)) : '—');
+      item('Cliques no link', MM(S.fInt(c.cliques))); item('CTR', c.impressoes && !c.semMeta ? S.fP(c.cliques / c.impressoes) : '—'); item('Leads Meta', MM(S.fInt(c.leads_meta)));
       item('CPL Meta', R(div(c.gasto, c.leads_meta))); item('Leads CRM', S.fInt(c.leads.length), c.leads, 'Leads do criativo', DC_GL); item('CPL CRM', R(div(c.gasto, c.leads.length)));
       item('Agendadas', S.fInt(c.calls.length), c.calls, 'Calls do criativo', DC_GC); item('Realizadas', S.fInt(c.reais.length), c.reais, 'Realizadas do criativo', DC_GC); item('Vendas', S.fInt(c.vend.length), c.vend, 'Vendas do criativo', DC_GV);
       item('Custo por call', R(div(c.gasto, c.calls.length))); item('Custo por realizada', R(div(c.gasto, c.reais.length))); item('CAC', R(div(c.gasto, c.vend.length)));
@@ -1957,7 +1977,10 @@
     const th = E('thead'); th.appendChild(trh);
     const tb = E('tbody'), tp = S.tip(wrap);
     rowsK.forEach(rk => {
-      const tr = E('tr'); tr.appendChild(E('td', 'nome', S.rotulo('cri', rk)));
+      const tr = E('tr'), tdn = E('td', 'nome');
+      const nomeCri = (base.find(r => r._k.cri === rk) || {}).utm_content || S.rotulo('cri', rk);
+      const bn = E('button', 'sr-cell nm sr-plink', S.rotulo('cri', rk)); bn.type = 'button'; bn.title = 'Ver o criativo e os números';
+      bn.addEventListener('click', () => S.abrirCriativo(nomeCri)); tdn.appendChild(bn); tr.appendChild(tdn);
       colsK.forEach(ck => {
         const rows = (cel.get(rk) || new Map()).get(ck) || [], td = E('td', 'c');
         if (rows.length) {
