@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123t">
+<link rel="stylesheet" href="fonts.css?v=20261123u">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -226,7 +226,7 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 @media (max-width:1100px){#anuncios .sr-rkcri{overflow-x:auto}#anuncios .sr-rkcri table{table-layout:auto;min-width:1000px}}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123t"></script>
+<script src="runtime.js?v=20261123u"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -714,9 +714,9 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   --r:14px;--sh1:0 1px 2px rgba(13,15,46,.04),0 12px 32px -18px rgba(13,15,46,.18);--sh2:0 2px 4px rgba(13,15,46,.05),0 18px 40px -18px rgba(13,15,46,.24);
   --navbg:linear-gradient(180deg,#130458 0%,#0B0A3A 100%);
   font-family:'Manrope',system-ui,sans-serif;font-size:13.5px;-webkit-font-smoothing:antialiased;
-  grid-template-columns:248px minmax(0,1fr);
+  grid-template-columns:268px minmax(0,1fr);
 }
-.sr.painel-on{grid-template-columns:248px minmax(0,1fr) minmax(380px,36%)}
+.sr.painel-on{grid-template-columns:268px minmax(0,1fr) minmax(380px,36%)}
 .sr.escuro{
   --bg:#06071A;--card:#0E1030;--borda:#1E2150;--borda2:#2E3268;--txt:#EEF0FF;--txt2:#AEB3D4;--azul:#8173FF;--azul2:#A196FF;--azul20:rgba(129,115,255,.3);--azul08:rgba(129,115,255,.14);
   --cinza:#3D4270;--zebra:#101336;--hover:#171A45;--sub:#13163D;--futuro:#0B0D2A;--tipbg:#EEF0FF;--tipfg:#06071A;--geralkpi:#0E1030;--primh:#A196FF;
@@ -890,6 +890,20 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
 .sr-navlinks .sr-navg.tem{color:var(--txt)}
 .sr.escuro .sr-navlinks .sr-navg.tem{color:#fff}
 .sr-navlinks svg.ic{stroke-width:1.75}
+/* sidebar: espaçamento uniforme e nomes numa linha só */
+.sr-nav{padding:26px 14px 18px;gap:24px}
+.sr-navlogo{padding:0 12px}
+.sr-navlinks{gap:2px}
+.sr-navlinks button{height:40px;padding:0 12px;gap:12px;font-size:14px;border-radius:10px}
+.sr-navlinks button span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-navlinks button svg.ic{flex:0 0 auto}
+.sr-navgrp{gap:2px;margin:6px 0}
+.sr-navgrp:first-child{margin-top:0}
+.sr-navlinks > button + .sr-navgrp,.sr-navgrp + button{margin-top:6px}
+.sr-navsub{margin:2px 0 2px 21px;padding-left:8px;gap:2px}
+.sr-navsub button{height:34px;font-size:13px;padding:0 10px;gap:10px;border-radius:8px}
+.sr-navsub svg.ic{width:16px;height:16px}
+.sr-navlinks button.on{font-weight:700}
 /* celular */
 @media (max-width:900px){
   .sr,.sr.painel-on{grid-template-columns:minmax(0,1fr)}
@@ -1233,8 +1247,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123t"></script>
-<script src="xlsx.js?v=20261123t"></script>
+<script src="config.js?v=20261123u"></script>
+<script src="xlsx.js?v=20261123u"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1356,8 +1370,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123t"></script>
-<script src="blocks.js?v=20261123t"></script>
+<script src="app.js?v=20261123u"></script>
+<script src="blocks.js?v=20261123u"></script>
 
 </div>
 </body>
