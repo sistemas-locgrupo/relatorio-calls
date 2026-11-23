@@ -22,8 +22,9 @@ async function graph(url, tentativas = 2) {
     const e = j.error || {};
     /* limite de chamadas do Meta: espera um pouco e tenta de novo */
     if (i < tentativas && (r.status === 429 || [4, 17, 32, 613].includes(e.code))) { await new Promise(s => setTimeout(s, 1500 * (i + 1))); continue; }
-    const msg = e.code === 190 ? 'O token do Meta é inválido ou expirou. Gere outro no Business Manager e atualize o segredo META_TOKEN.'
-      : e.code === 10 || e.code === 200 ? 'O token do Meta não tem permissão de leitura (ads_read) numa das contas.'
+    const det = ` [Meta: ${e.message || r.status}${e.error_subcode ? ' · subcódigo ' + e.error_subcode : ''}]`;
+    const msg = e.code === 190 ? 'O token do Meta é inválido ou expirou. Gere outro no Business Manager e atualize o segredo META_TOKEN.' + det
+      : e.code === 10 || e.code === 200 ? 'O token do Meta não tem permissão de leitura (ads_read) numa das contas.' + det
       : 'O Meta respondeu com erro: ' + (e.message || r.status);
     throw new Error(msg);
   }
@@ -47,7 +48,7 @@ export async function onRequestGet({ request, env }) {
     const cache = caches.default;
     if (u.searchParams.get('atualizar') !== '1') { const c = await cache.match(chaveCache); if (c) return new Response(c.body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } }); }
 
-    const V = String(env.META_VERSAO || 'v23.0').trim(), T = encodeURIComponent(String(env.META_TOKEN).trim());
+    const V = String(env.META_VERSAO || 'v23.0').trim(), T = encodeURIComponent(String(env.META_TOKEN).replace(/[\s"']/g, ''));
     const base = `https://graph.facebook.com/${V}/`;
 
     /* contas: as de META_CONTAS ou todas que o usuário do sistema enxerga */
