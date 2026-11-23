@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Usuários · Relatório de Calls</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0256C6">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="auth.css">
+<style>
+.pag{display:grid;gap:16px}
+.novo{display:grid;grid-template-columns:1.2fr 1.4fr .8fr auto;gap:12px;align-items:end}
+.novo .campo{margin:0}
+.tab{width:100%;border-collapse:collapse;font-size:13px}
+.tab th{text-align:left;font-size:12px;font-weight:600;color:var(--txt2);padding:8px 10px;border-bottom:1px solid var(--borda)}
+.tab td{padding:10px;border-bottom:1px solid #F0F1F4;vertical-align:middle}
+.tab tr:last-child td{border-bottom:0}
+.tab .nome{font-weight:600}
+.tab .mail{color:var(--txt2);font-size:12px}
+.tab .acoes{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.tab .btn{height:30px;padding:0 10px;font-size:12px;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.tag.admin{background:rgba(33,3,206,.08);color:var(--azul)}
+.tag.usuario{background:#F1F2F5;color:var(--txt2)}
+.tag.pend{background:#FFF4E5;color:#7A3E00;margin-left:6px}
+.senha-box{display:none;margin-bottom:16px;padding:14px;border:1px solid #BFE6C9;background:var(--ok-bg);border-radius:var(--r);font-size:13px;line-height:1.5}
+.senha-box.on{display:block}
+.senha-box code{display:inline-block;margin:6px 6px 0 0;padding:6px 10px;background:#fff;border:1px solid var(--borda);border-radius:4px;font:600 15px/1 ui-monospace,Consolas,monospace;letter-spacing:.04em}
+.vazio{color:var(--txt2);padding:16px 0}
+@media (max-width:760px){
+  .novo{grid-template-columns:1fr}
+  .tab thead{display:none}
+  .tab tr{display:grid;grid-template-columns:1fr auto;gap:6px;padding:10px 0;border-bottom:1px solid #F0F1F4}
+  .tab td{border:0;padding:0 4px}
+  .tab td.ac{grid-column:1/-1}
+  .tab .acoes{justify-content:flex-start}
+  .tab td.ult{display:none}
+}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div><img src="logo.png" alt="locagora"><div class="sub">Usuários do relatório</div></div>
+  <a class="btn" href="/">Voltar ao relatório</a>
+</header>
+<main class="pag" style="max-width:1040px">
+  <form class="cartao" id="f-novo" novalidate>
+    <h2>Adicionar pessoa</h2>
+    <p class="desc">O sistema gera uma senha provisória. Passe para a pessoa; no primeiro acesso ela cria a senha dela.</p>
+    <div class="msg" id="msg-novo" role="alert"></div>
+    <div class="novo">
+      <div class="campo"><label for="n-nome">Nome</label><input id="n-nome" autocomplete="off" required></div>
+      <div class="campo"><label for="n-email">E-mail</label><input id="n-email" type="email" autocomplete="off" required></div>
+      <div class="campo"><label for="n-papel">Perfil</label>
+        <select id="n-papel"><option value="usuario">Usuário</option><option value="admin">Administrador</option></select></div>
+      <button class="btn prim" type="submit" id="b-novo">Adicionar</button>
+    </div>
+  </form>
+
+  <section class="cartao">
+    <h2>Quem tem acesso</h2>
+    <p class="desc">Administradores também podem cadastrar, remover e redefinir senhas.</p>
+    <div class="senha-box" id="senha-box" role="status"></div>
+    <div class="msg" id="msg-lista" role="alert"></div>
+    <table class="tab">
+      <thead><tr><th>Pessoa</th><th>Perfil</th><th>Último acesso</th><th></th></tr></thead>
+      <tbody id="lista"><tr><td colspan="4" class="vazio">Carregando…</td></tr></tbody>
+    </table>
+  </section>
+</main>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let eu = null, usuarios = [], confirmando = null;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const quando = iso => iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Nunca entrou';
+  const msg = (el, t, tipo) => { el.textContent = t || ''; el.className = 'msg' + (t ? ' ' + (tipo || 'erro') : ''); };
+
+  async function api(method, corpo) {
+    const r = await fetch('/api/usuarios', { method, credentials: 'same-origin', headers: corpo ? { 'content-type': 'application/json' } : {}, body: corpo ? JSON.stringify(corpo) : undefined, cache: 'no-store' });
+    if (r.status === 401) { location.replace('/login?volta=/admin'); throw new Error('Sessão expirada.'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.erro || 'Não foi possível concluir.');
+    return j;
+  }
+  function mostraSenha(nome, email, senha, titulo) {
+    const b = $('senha-box');
+    b.innerHTML = '<strong>' + esc(titulo) + '</strong><br>Envie para <strong>' + esc(nome) + '</strong> (' + esc(email) + '). Ela só aparece agora:<br>' +
+      '<code>' + esc(senha) + '</code><button class="btn sec" type="button" id="copiar" style="height:30px;font-size:12px">Copiar</button>';
+    b.classList.add('on');
+    $('copiar').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(senha).then(() => { $('copiar').textContent = 'Copiado'; }); };
+    b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function desenha() {
+    const tb = $('lista');
+    if (!usuarios.length) { tb.innerHTML = '<tr><td colspan="4" class="vazio">Ninguém cadastrado.</td></tr>'; return; }
+    tb.innerHTML = usuarios.map(u => {
+      const sou = eu && u.email === eu.email;
+      const conf = confirmando === u.email;
+      return '<tr data-email="' + esc(u.email) + '">' +
+        '<td><div class="nome">' + esc(u.nome) + (sou ? ' <span style="color:var(--txt2);font-weight:400">(você)</span>' : '') + '</div><div class="mail">' + esc(u.email) + '</div></td>' +
+        '<td><span class="tag ' + u.papel + '">' + (u.papel === 'admin' ? 'Administrador' : 'Usuário') + '</span></td>' +
+        '<td class="ult">' + esc(quando(u.ultimo_acesso)) + '</td>' +
+        '<td class="ac"><div class="acoes">' + (sou ? '<a class="btn sec" href="/senha?volta=/admin">Trocar minha senha</a>' :
+          '<button class="btn sec" type="button" data-a="papel">' + (u.papel === 'admin' ? 'Tornar usuário' : 'Tornar admin') + '</button>' +
+          '<button class="btn sec" type="button" data-a="redefinir">Redefinir senha</button>' +
+          (conf ? '<button class="btn perigo" type="button" data-a="remover-ok">Confirmar remoção</button><button class="btn sec" type="button" data-a="remover-nao">Cancelar</button>'
+                : '<button class="btn perigo" type="button" data-a="remover">Remover</button>')) +
+        '</div></td></tr>';
+    }).join('');
+  }
+  async function carrega() {
+    try { usuarios = (await api('GET')).usuarios || []; desenha(); }
+    catch (e) { msg($('msg-lista'), e.message); }
+  }
+
+  $('lista').addEventListener('click', async ev => {
+    const b = ev.target.closest('button[data-a]'); if (!b) return;
+    const email = b.closest('tr').dataset.email, u = usuarios.find(x => x.email === email);
+    const a = b.dataset.a; msg($('msg-lista'), '');
+    if (a === 'remover') { confirmando = email; return desenha(); }
+    if (a === 'remover-nao') { confirmando = null; return desenha(); }
+    b.disabled = true;
+    try {
+      if (a === 'remover-ok') { await api('DELETE', { email }); confirmando = null; msg($('msg-lista'), u.nome + ' não tem mais acesso.', 'ok'); }
+      if (a === 'redefinir') { const j = await api('POST', { acao: 'redefinir', email }); mostraSenha(u.nome, email, j.senha, 'Senha redefinida.'); }
+      if (a === 'papel') { await api('POST', { acao: 'papel', email, papel: u.papel === 'admin' ? 'usuario' : 'admin' }); }
+      await carrega();
+    } catch (e) { msg($('msg-lista'), e.message); b.disabled = false; }
+  });
+
+  $('f-novo').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const m = $('msg-novo'), b = $('b-novo');
+    const nome = $('n-nome').value.trim(), email = $('n-email').value.trim().toLowerCase();
+    if (!nome || !email) return msg(m, 'Preencha nome e e-mail.');
+    msg(m, ''); b.disabled = true;
+    try {
+      const j = await api('POST', { acao: 'criar', nome, email, papel: $('n-papel').value });
+      mostraSenha(nome, email, j.senha, nome + ' foi adicionado(a).');
+      $('f-novo').reset(); await carrega();
+    } catch (e) { msg(m, e.message); }
+    b.disabled = false;
+  });
+
+  fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => { eu = j; carrega(); });
+})();
+</script>
+</body>
+</html>

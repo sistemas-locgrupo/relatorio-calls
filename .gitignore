@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+# chaves e credenciais: nunca vão para o GitHub
+*.json
+*.json.key
+*.pem
+*.key
+chave*
