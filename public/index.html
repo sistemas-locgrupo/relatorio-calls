@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123f">
+<link rel="stylesheet" href="fonts.css?v=20261123g">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -141,9 +141,46 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 #gestores .sr-cri .nums dt{color:var(--txt2)}
 #gestores .sr-cri .nums dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt)}
 .sr.escuro #gestores .sr-cri{background:#1C1C20}
+
+/* gerenciador de anúncios */
+#anuncios .sr-sub3{margin:18px 0 8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px}
+#anuncios .sr-sub3 .sr-hint{font-weight:500}
+#anuncios .sr-motw{overflow-x:auto}
+#anuncios .sr-link{margin-top:8px}
+#anuncios .sr-metainfo{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px dashed var(--borda);border-radius:12px;font-size:13px;color:var(--txt)}
+#anuncios .sr-metainfo span{color:var(--txt2);font-size:12.5px}
+#anuncios .sr-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+#anuncios .sr-cri{border:1px solid var(--borda);border-radius:14px;overflow:hidden;background:var(--card);display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(17,19,39,.04),0 8px 20px -14px rgba(17,19,39,.25)}
+#anuncios .sr-cri .fig{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:block;width:100%;aspect-ratio:1/1;background:var(--azul08);overflow:hidden}
+#anuncios .sr-cri .fig img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+#anuncios .sr-cri .fig:hover img{transform:scale(1.03)}
+#anuncios .sr-cri .fig:focus-visible{outline:2px solid var(--azul);outline-offset:-2px}
+#anuncios .sr-cri .fig::after{content:"";position:absolute;right:8px;bottom:8px;width:30px;height:30px;border-radius:50%;background:rgba(17,19,39,.7) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center/16px no-repeat}
+#anuncios .sr-cri .fig .sem{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt2);font-size:12px}
+#anuncios .sr-cri .fig .pos{position:absolute;top:8px;left:8px;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:rgba(17,19,39,.78);color:#fff;font:800 12px/24px Manrope,sans-serif;text-align:center}
+#anuncios .sr-cri .cb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+#anuncios .sr-cri .nm{font-weight:800;font-size:13px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#anuncios .sr-cri .gs{font-size:11.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#anuncios .sr-cri .nums{display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin:6px 0 0;font-size:12px}
+#anuncios .sr-cri .nums dt{color:var(--txt2)}
+#anuncios .sr-cri .nums dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt)}
+.sr.escuro #anuncios .sr-cri{background:#1C1C20}
+.sr-anome{text-transform:none}
+.sr-amidia{position:relative;border-radius:14px;overflow:hidden;background:#0b0b12;display:grid;place-items:center;min-height:240px}
+.sr-amidia video,.sr-amidia img{display:block;width:100%;max-height:70vh;object-fit:contain;background:#0b0b12}
+.sr-amidia.ifr{background:#fff;min-height:0}
+.sr-amidia iframe{display:block;width:100%;height:640px;border:0}
+.sr-amidia .sem{color:#cbd0dd;font-size:13px}
+.sr-amidia .aviso{position:absolute;left:10px;bottom:10px;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:12px}
+.sr-atexto{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--txt);white-space:pre-line;max-height:180px;overflow:auto;padding:12px 14px;border:1px solid var(--borda);border-radius:12px}
+.sr-atexto p{margin:0;color:var(--txt2)}
+.sr-akpi{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sr-akpi .it .v.sr-plink{all:unset;cursor:pointer;font-weight:800;font-size:13.5px;color:var(--azul)}
+.sr-akpi .it .v.sr-plink:hover{text-decoration:underline}
+@media (max-width:640px){.sr-akpi{grid-template-columns:repeat(2,minmax(0,1fr))}.sr-amidia iframe{height:520px}}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123f"></script>
+<script src="runtime.js?v=20261123g"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -843,7 +880,13 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
         <button type="button" data-ir="vendas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg><span>Geral</span></button>
         </div>
       </div>
-      <button type="button" data-ir="gestores"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span>Gestores de tráfego</span></button>
+      <div class="sr-navgrp">
+        <button type="button" class="sr-navg" aria-expanded="true" aria-controls="ng-gestores"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span>Gestores de tráfego</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="sr-navsub" id="ng-gestores">
+        <button type="button" data-ir="gestores"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Visão por gestor</span></button>
+        <button type="button" data-ir="anuncios"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg><span>Gerenciador de anúncios</span></button>
+        </div>
+      </div>
       <button type="button" data-ir="perdas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg><span>Perdas</span></button>
       <button type="button" data-ir="saude"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg><span>Saúde do funil</span></button>
     </div>
@@ -858,7 +901,7 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <main class="sr-main">
     <header class="sr-head" id="cabecalho">
       <div class="sr-tt">
-        <h1 class="sr-title"><span data-tit="progressao">Visão geral</span><span data-tit="geral" hidden>Calls e leads · Geral</span><span data-tit="vendas" hidden>Vendas · Geral</span><span data-tit="conversao" hidden>Taxa de conversão</span><span data-tit="saude" hidden>Saúde do funil</span><span data-tit="leads-sdr" hidden>Leads por SDR</span><span data-tit="gestores" hidden>Gestores de tráfego</span><span data-tit="perdas" hidden>Desqualificações e perdas</span><span data-tit="ranking-tags" hidden>Ranking</span><span data-tit="gravacoes-pendentes" hidden>Qualidade</span><span data-tit="origem" hidden>Origem das calls</span><span data-tit="analises" hidden>Análise</span></h1>
+        <h1 class="sr-title"><span data-tit="progressao">Visão geral</span><span data-tit="geral" hidden>Calls e leads · Geral</span><span data-tit="vendas" hidden>Vendas · Geral</span><span data-tit="conversao" hidden>Taxa de conversão</span><span data-tit="saude" hidden>Saúde do funil</span><span data-tit="leads-sdr" hidden>Leads por SDR</span><span data-tit="gestores" hidden>Gestores de tráfego</span><span data-tit="anuncios" hidden>Gerenciador de anúncios</span><span data-tit="perdas" hidden>Desqualificações e perdas</span><span data-tit="ranking-tags" hidden>Ranking</span><span data-tit="gravacoes-pendentes" hidden>Qualidade</span><span data-tit="origem" hidden>Origem das calls</span><span data-tit="analises" hidden>Análise</span></h1>
         <span class="sr-upd" data-draw="atualizado" data-source="base_unificada">—</span>
       </div>
       <div class="sr-ctl">
@@ -1102,6 +1145,14 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
         <div data-draw="gestores" data-source="base_unificada"></div>
       </section>
 
+      <section class="sr-card sr-c12" id="anuncios">
+        <div class="sr-ch">
+          <h2 class="sr-h">Gerenciador de anúncios</h2>
+          <span class="sr-hint">Investimento do Meta (Facebook / Instagram) contra leads, calls e vendas do CRM · clique no criativo para ver o vídeo</span>
+        </div>
+        <div data-draw="anuncios" data-source="base_unificada"></div>
+      </section>
+
       <section class="sr-card sr-c12" id="perdas">
         <div class="sr-ch">
           <h2 class="sr-h">Desqualificações e perdas</h2>
@@ -1131,12 +1182,13 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
 
   <div class="sr-tv" data-draw="tv" data-source="base_unificada" role="dialog" aria-modal="true" aria-label="Ranking em modo TV" hidden></div>
   <div class="sr-perfil" data-draw="perfil" data-source="base_unificada" role="dialog" aria-modal="true" aria-label="Perfil do lead" hidden></div>
+  <div class="sr-perfil sr-anuncio" data-draw="anuncio" data-source="base_unificada" role="dialog" aria-modal="true" aria-label="Criativo do anúncio" hidden></div>
   <div class="sr-modal" data-draw="drawer" data-source="base_unificada" role="dialog" aria-modal="true" aria-label="Lista de leads" hidden></div>
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123f"></script>
-<script src="xlsx.js?v=20261123f"></script>
+<script src="config.js?v=20261123g"></script>
+<script src="xlsx.js?v=20261123g"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1258,8 +1310,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123f"></script>
-<script src="blocks.js?v=20261123f"></script>
+<script src="app.js?v=20261123g"></script>
+<script src="blocks.js?v=20261123g"></script>
 
 </div>
 </body>
