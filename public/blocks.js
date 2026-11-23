@@ -845,7 +845,10 @@
   /* conta de anúncio do Meta → gestor. Todo anúncio dessas contas vai para o gestor, com ou sem lead no CRM.
      Para incluir outra conta, acrescente uma linha com o nome da conta como aparece no Business Manager. */
   const CONTAS_GESTOR = [
-    ['C1 - ATIVA - LOCAGORA', 'Rei do Tráfego']
+    ['C1 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
+    ['C2 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
+    ['C3 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
+    ['Localpha 01', 'Gabriel']
   ];
   const MAPA_CONTA = new Map(CONTAS_GESTOR.map(([c, g]) => [String(c).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(), g]));
   /* liga cada anúncio a um gestor: pela conta (tabela acima ou META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
@@ -993,7 +996,7 @@
         return { key: n === SEM_GEST ? S.SEMK : n, nome: n, m };
       }).filter(g => g.m.gasto > 0 || g.m.leads.length);
       const tot = metricasGest(B, r => r.canal_geral === META_CANAL && (!st.sel || r.gestor === st.sel)); tot.gasto = d3.sum(linhasM, g => g.m.gasto); tot.leadsMeta = d3.sum(linhasM, g => g.m.leadsMeta);
-      const div = (a, b) => b > 0 ? a / b : null, fR = v => v == null ? '—' : S.fBRL(v);
+      const div = (a, b) => b > 0 && a > 0 ? a / b : null, fR = v => v == null ? '—' : S.fBRL(v);
       const COLS_META = [
         { k: 'gasto', t: 'Investimento', v: m => m.gasto, f: S.fBRL },
         { k: 'lmeta', t: 'Leads Meta', v: m => m.leadsMeta, f: S.fInt },
@@ -1013,7 +1016,7 @@
         nomeAcao: g => ({ fn: () => S.abrir({ titulo: 'Leads de canal Meta', recorte: ['Gestor: ' + g.nome], rows: g.m.leads, kind: 'l', cols: DC_GL }) }) });
       box.appendChild(wm);
       if (MS.dados.aviso) box.appendChild(cardMeta('Imagens dos criativos indisponíveis', MS.dados.aviso));
-      const at = E('p', 'sr-hint'); at.textContent = `Dados do Meta de ${S.fData(MS.dados.ini)} a ${S.fData(MS.dados.fim)} · atualizados às ${S.fDataHora(MS.dados.gerado).slice(-5)} · contas: ${MS.dados.contas.map(c => c.nome).join(', ')}. Leads CRM, calls e vendas contam só leads de canal Meta. `;
+      const at = E('p', 'sr-hint'); at.textContent = `Dados do Meta de ${S.fData(MS.dados.ini)} a ${S.fData(MS.dados.fim)} · atualizados às ${new Date(MS.dados.gerado).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · contas: ${MS.dados.contas.map(c => c.nome).join(', ')}. Leads CRM, calls e vendas contam só leads de canal Meta. `;
       const up = E('button', 'sr-link', 'Atualizar agora'); up.type = 'button'; up.addEventListener('click', () => carregarMeta(B.F, true)); at.appendChild(up);
       box.appendChild(at);
       /* galeria dos criativos do Meta */
