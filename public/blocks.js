@@ -653,9 +653,13 @@
       tn.appendChild(nb); if (g.mae) tn.appendChild(E('span', 'sr-mae', g.mae));
       tr.appendChild(tn);
       o.cols.forEach(c => {
-        const v = c.v(g.m), td = E('td', 'n' + (c.k === col.k ? ' sr-bar' : ''));
-        if (c.k === col.k && maxV > 0 && v != null && v > 0) { const i = E('i'); i.style.width = `calc((100% - 66px) * ${(v / maxV).toFixed(4)})`; td.appendChild(i); }
-        celula(td, c.f(v), () => S.abrir({ titulo: c.tit, recorte: [nomeCol + ': ' + g.nome], rows: c.rows(g.m), kind: c.kind || 'c', cols: c.dcols }));
+        const v = c.v(g.m), td = E('td', 'n' + (c.k === col.k ? ' sr-bar' : '')), txt = c.f(v);
+        if (c.k === col.k && maxV > 0 && v != null && v > 0) {
+          /* a barra fica à esquerda do número; números largos (R$) empurram a barra */
+          const off = Math.max(56, Math.round(String(txt).length * 7.4) + 14);
+          const i = E('i'); i.style.right = off + 'px'; i.style.width = `calc((100% - ${off + 10}px) * ${(v / maxV).toFixed(4)})`; td.appendChild(i);
+        }
+        celula(td, txt, c.rows ? () => S.abrir({ titulo: c.tit, recorte: [nomeCol + ': ' + g.nome], rows: c.rows(g.m), kind: c.kind || 'c', cols: c.dcols }) : null);
         tr.appendChild(td);
       });
       return tr;
@@ -666,7 +670,7 @@
     if (o.total) {
       const tm = o.total, tf = E('tfoot'), tr = E('tr');
       tr.append(E('td', 'pos', ''), E('td', 'nome', 'Total'));
-      o.cols.forEach(c => { const td = E('td', 'n'); celula(td, c.f(c.v(tm)), () => S.abrir({ titulo: c.tit, rows: c.rows(tm), kind: c.kind || 'c', cols: c.dcols })); tr.appendChild(td); });
+      o.cols.forEach(c => { const td = E('td', 'n'); celula(td, c.f(c.v(tm)), c.rows ? () => S.abrir({ titulo: c.tit, rows: c.rows(tm), kind: c.kind || 'c', cols: c.dcols }) : null); tr.appendChild(td); });
       tf.appendChild(tr); tbl.appendChild(tf);
     }
     const w = E('div', 'sr-tw'); w.appendChild(tbl); el.replaceChildren(w);
@@ -825,6 +829,39 @@
     { k: 'valorV', t: 'Valor', v: m => m.valorV, f: S.fBRL, rows: m => m.vend.filter(o => o.valor > 0), tit: 'Vendas com valor', kind: 'l', dcols: DC_GV },
     { k: 'perd', t: 'Perdas', v: m => m.perd.length, f: S.fInt, rows: m => m.perd, tit: 'Perdidas e desqualificadas', kind: 'l', dcols: DC_GP }
   ];
+  /* ---------- Meta (Facebook / Instagram): gasto, leads e criativo por anúncio, via /api/meta (só no site) ---------- */
+  S.st.meta = S.st.meta || { chave: '', estado: 'nada', dados: null, erro: '' };
+  const normNome = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  function carregarMeta(F, forcar) {
+    const m = S.st.meta, chave = F.a + '|' + F.b;
+    if (!forcar && m.chave === chave && m.estado !== 'nada') return;
+    m.chave = chave; m.estado = 'carregando'; m.erro = '';
+    fetch('/api/meta?ini=' + F.a + '&fim=' + F.b + (forcar ? '&atualizar=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
+      .then(r => { const tipo = r.headers.get('content-type') || ''; if (!tipo.includes('json')) throw new Error('indisponivel'); return r.json(); })
+      .then(j => { if (m.chave !== chave) return; if (j.ok) { m.estado = 'ok'; m.dados = j; } else { m.estado = j.conectado === false ? 'desconectado' : 'erro'; m.erro = j.erro || ''; m.dados = null; } dash.draw('gestores'); })
+      .catch(() => { if (m.chave !== chave) return; m.estado = 'indisponivel'; m.dados = null; dash.draw('gestores'); });
+  }
+  /* liga cada anúncio a um gestor: pela conta (META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
+  function metaPorGestor(B) {
+    const j = S.st.meta.dados; if (!j) return null;
+    const D = S.dados(), voto = new Map();
+    (D.leads || []).forEach(l => { marcaGestor(l); const k = normNome(l.utm_content); if (!k || !l.gestor) return; const v = voto.get(k) || new Map(); v.set(l.gestor, (v.get(l.gestor) || 0) + 1); voto.set(k, v); });
+    const gestorDe = a => {
+      if (a.gestor_conta) return a.gestor_conta;
+      const v = voto.get(normNome(a.anuncio)); if (v) return [...v.entries()].sort((x, y) => y[1] - x[1])[0][0];
+      const e = campanhaDe(a.campanha) || campanhaDe(a.conjunto); return e ? e.g : SEM_GEST;
+    };
+    const ads = j.anuncios.map(a => Object.assign({}, a, { gestor: gestorDe(a), _k: normNome(a.anuncio) }));
+    /* criativos: soma o mesmo anúncio rodando em vários conjuntos */
+    const porNome = new Map();
+    ads.forEach(a => { const c = porNome.get(a._k) || { nome: a.anuncio, _k: a._k, gestor: a.gestor, campanhas: new Set(), gasto: 0, leads_meta: 0, impressoes: 0, cliques: 0, thumb: '', imagem: '', link: '' };
+      c.gasto += a.gasto; c.leads_meta += a.leads_meta; c.impressoes += a.impressoes; c.cliques += a.cliques; c.campanhas.add(a.campanha);
+      if (!c.thumb && a.thumb) { c.thumb = a.thumb; c.imagem = a.imagem; c.link = a.link; } porNome.set(a._k, c); });
+    return { ads, porNome };
+  }
+  const META_CANAL = 'Facebook / Instagram';
+  function cardMeta(txt, sub) { const c = E('div', 'sr-metainfo'); c.append(E('b', '', txt)); if (sub) c.appendChild(E('span', '', sub)); return c; }
+
   dash.draw('gestores', el => {
     const D = S.dados(), B = baseGestores();
     if (!B) { S.vazio(el, S.estado(D && D.ok ? dash.data('negocios') : D)); return; }
@@ -877,6 +914,74 @@
       nomeAcao: g => ({ fn: () => S.abrir({ titulo: 'Leads criados', recorte: ['Campanha: ' + g.key], rows: g.m.leads, kind: 'l', cols: DC_GL }) }) });
     else w2.appendChild(E('div', 'sr-empty', 'Nenhum lead dessas campanhas no período.'));
     box.appendChild(w2);
+    /* 2b. investimento no Meta: custo por lead, por call e CAC */
+    carregarMeta(B.F);
+    const MS = S.st.meta, MG = MS.estado === 'ok' ? metaPorGestor(B) : null;
+    sec('Investimento no Meta' + (st.sel ? ' · ' + st.sel : ''), 'gasto do Meta (Facebook / Instagram) contra os leads, calls e vendas de canal Meta no CRM');
+    if (!MG) {
+      const msgs = { carregando: ['Buscando os dados do Meta…', ''], indisponivel: ['Os dados do Meta aparecem só no site do relatório.', 'Esta versão não tem acesso à conta de anúncios.'],
+        desconectado: ['O Meta ainda não está conectado.', 'Falta guardar o token do usuário do sistema (META_TOKEN) no Cloudflare.'], erro: ['Não foi possível ler os dados do Meta.', MS.erro], nada: ['Buscando os dados do Meta…', ''] };
+      const [t1, t2] = msgs[MS.estado] || msgs.nada; box.appendChild(cardMeta(t1, t2));
+    } else {
+      const nomes = st.sel ? [st.sel] : NOMES_GEST.concat([SEM_GEST]);
+      const linhasM = nomes.map(n => {
+        const ads = MG.ads.filter(a => a.gestor === n), fM = r => r.canal_geral === META_CANAL && (n === SEM_GEST ? !r.gestor : r.gestor === n);
+        const m = metricasGest(B, fM); m.gasto = d3.sum(ads, a => a.gasto); m.leadsMeta = d3.sum(ads, a => a.leads_meta); m.ads = ads;
+        return { key: n === SEM_GEST ? S.SEMK : n, nome: n, m };
+      }).filter(g => g.m.gasto > 0 || g.m.leads.length);
+      const tot = metricasGest(B, r => r.canal_geral === META_CANAL && (!st.sel || r.gestor === st.sel)); tot.gasto = d3.sum(linhasM, g => g.m.gasto); tot.leadsMeta = d3.sum(linhasM, g => g.m.leadsMeta);
+      const div = (a, b) => b > 0 ? a / b : null, fR = v => v == null ? '—' : S.fBRL(v);
+      const COLS_META = [
+        { k: 'gasto', t: 'Investimento', v: m => m.gasto, f: S.fBRL },
+        { k: 'lmeta', t: 'Leads Meta', v: m => m.leadsMeta, f: S.fInt },
+        Object.assign({}, C.leads, { t: 'Leads CRM', dcols: DC_GL }),
+        Object.assign({}, C.calls, { t: 'Agendadas', dcols: DC_GC }),
+        Object.assign({}, C.realizadas, { dcols: DC_GC }),
+        { k: 'vend', t: 'Vendas', v: m => m.vend.length, f: S.fInt, rows: m => m.vend, tit: 'Vendas', kind: 'l', dcols: DC_GV },
+        { k: 'cpl', t: 'Custo por lead CRM', v: m => div(m.gasto, m.leads.length), f: fR },
+        { k: 'cpc', t: 'Custo por call', v: m => div(m.gasto, m.calls.length), f: fR },
+        { k: 'cpr', t: 'Custo por realizada', v: m => div(m.gasto, m.realizadas.length), f: fR },
+        { k: 'cac', t: 'CAC', v: m => div(m.gasto, m.vend.length), f: fR }
+      ];
+      const wm = E('div', 'sr-motw');
+      tabelaRanking(wm, { dim: 'gestor', nomeCol: 'Gestor', grupos: linhasM, cols: COLS_META, ord: st.ordM || (st.ordM = { k: 'gasto', dir: -1 }), semMedalha: true, total: st.sel ? null : tot,
+        aoOrdenar: (k, dir) => { st.ordM = { k, dir }; dash.draw('gestores'); },
+        nomeAcao: g => ({ fn: () => S.abrir({ titulo: 'Leads de canal Meta', recorte: ['Gestor: ' + g.nome], rows: g.m.leads, kind: 'l', cols: DC_GL }) }) });
+      box.appendChild(wm);
+      const at = E('p', 'sr-hint'); at.textContent = `Dados do Meta de ${S.fData(MS.dados.ini)} a ${S.fData(MS.dados.fim)} · atualizados às ${S.fDataHora(MS.dados.gerado).slice(-5)} · contas: ${MS.dados.contas.map(c => c.nome).join(', ')}. Leads CRM, calls e vendas contam só leads de canal Meta. `;
+      const up = E('button', 'sr-link', 'Atualizar agora'); up.type = 'button'; up.addEventListener('click', () => carregarMeta(B.F, true)); at.appendChild(up);
+      box.appendChild(at);
+      /* galeria dos criativos do Meta */
+      sec('Criativos do Meta' + (st.sel ? ' de ' + st.sel : ''), 'clique na imagem para ver o anúncio');
+      const Lm = so(B.leads, fG), Cm = so(B.calls, fG), Vm = so(B.vend, fG);
+      const porCri = (rows) => d3.group(rows, r => normNome(r.utm_content));
+      const gL = porCri(Lm), gC = porCri(Cm), gV = porCri(Vm);
+      let cards = [...MG.porNome.values()].filter(c => !st.sel || c.gestor === st.sel).map(c => {
+        const calls = S.umPorLead(gC.get(c._k) || []), leads = gL.get(c._k) || [], vend = gV.get(c._k) || [];
+        return Object.assign(c, { calls, leads, vend, reais: (gC.get(c._k) || []).filter(r => r._g === 'realizada') });
+      }).filter(c => c.gasto > 0 || c.leads.length);
+      cards.sort((a, b) => b.calls.length - a.calls.length || b.leads.length - a.leads.length || b.gasto - a.gasto);
+      const totC = cards.length; if (!st.todosMeta) cards = cards.slice(0, 12);
+      const gal = E('div', 'sr-gal');
+      cards.forEach((c, i) => {
+        const cd = E('article', 'sr-cri');
+        const fig = c.link ? E('a', 'fig') : E('div', 'fig'); if (c.link) { fig.href = c.link; fig.target = '_blank'; fig.rel = 'noopener noreferrer'; fig.title = 'Ver o anúncio no Meta'; }
+        if (c.thumb) { const im = E('img'); im.src = c.thumb; im.alt = 'Criativo ' + c.nome; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; fig.appendChild(im); } else fig.appendChild(E('span', 'sem', 'Sem prévia'));
+        fig.appendChild(E('span', 'pos', String(i + 1)));
+        const corpo = E('div', 'cb');
+        const nm = E('div', 'nm', c.nome); nm.title = c.nome + '\n' + [...c.campanhas].join(' · ');
+        corpo.append(nm, E('div', 'gs', (c.gestor || SEM_GEST) + ' · ' + [...c.campanhas][0]));
+        const dl = E('dl', 'nums');
+        const par = (t, v, rows, tit, cols) => { const dt = E('dt', '', t), dd = E('dd'); if (rows && rows.length) { const b = E('button', 'sr-cell nm sr-plink', v); b.type = 'button'; b.addEventListener('click', () => S.abrir({ titulo: tit, recorte: ['Criativo: ' + c.nome], rows, kind: 'l', cols })); dd.appendChild(b); } else dd.textContent = v; dl.append(dt, dd); };
+        par('Investimento', S.fBRL(c.gasto)); par('Leads Meta', S.fInt(c.leads_meta)); par('Leads CRM', S.fInt(c.leads.length), c.leads, 'Leads do criativo', DC_GL);
+        par('Agendadas', S.fInt(c.calls.length), c.calls, 'Calls do criativo', DC_GC); par('Realizadas', S.fInt(c.reais.length), c.reais, 'Realizadas do criativo', DC_GC);
+        par('Vendas', S.fInt(c.vend.length), c.vend, 'Vendas do criativo', DC_GV);
+        par('Custo por call', c.calls.length ? S.fBRL(c.gasto / c.calls.length) : '—'); par('CAC', c.vend.length ? S.fBRL(c.gasto / c.vend.length) : '—');
+        corpo.appendChild(dl); cd.append(fig, corpo); gal.appendChild(cd);
+      });
+      if (cards.length) box.appendChild(gal); else box.appendChild(E('div', 'sr-empty', 'Nenhum anúncio com gasto no período.'));
+      if (totC > 12) { const mb = E('button', 'sr-link', st.todosMeta ? 'Mostrar só os 12 melhores' : `Mostrar todos os ${S.fInt(totC)} criativos do Meta`); mb.type = 'button'; mb.addEventListener('click', () => { st.todosMeta = !st.todosMeta; dash.draw('gestores'); }); box.appendChild(mb); }
+    }
     /* 3. melhores criativos */
     sec('Melhores criativos' + (st.sel ? ' de ' + st.sel : ''), 'utm_content dos leads das tags do gestor, ordenado por calls agendadas');
     const Lg = so(B.leads, fG), Cg = so(B.calls, fG), Vg = so(B.vend, fG);

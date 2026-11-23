@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123c">
+<link rel="stylesheet" href="fonts.css?v=20261123d">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -122,9 +122,28 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 #gestores .sr-pilha{display:flex;flex-direction:column;gap:22px}
 #gestores .sr-motw{overflow-x:auto}
 #gestores .sr-link{margin-top:8px}
+
+/* meta: investimento e criativos */
+#gestores .sr-metainfo{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px dashed var(--borda);border-radius:12px;font-size:13px;color:var(--txt)}
+#gestores .sr-metainfo span{color:var(--txt2);font-size:12.5px}
+#gestores .sr-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+#gestores .sr-cri{border:1px solid var(--borda);border-radius:14px;overflow:hidden;background:var(--card);display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(17,19,39,.04),0 8px 20px -14px rgba(17,19,39,.25)}
+#gestores .sr-cri .fig{position:relative;display:block;aspect-ratio:1/1;background:var(--azul08);overflow:hidden}
+#gestores .sr-cri .fig img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+#gestores .sr-cri a.fig:hover img{transform:scale(1.03)}
+#gestores .sr-cri a.fig:focus-visible{outline:2px solid var(--azul);outline-offset:-2px}
+#gestores .sr-cri .fig .sem{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt2);font-size:12px}
+#gestores .sr-cri .fig .pos{position:absolute;top:8px;left:8px;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:rgba(17,19,39,.78);color:#fff;font:800 12px/24px Manrope,sans-serif;text-align:center}
+#gestores .sr-cri .cb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+#gestores .sr-cri .nm{font-weight:800;font-size:13px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gestores .sr-cri .gs{font-size:11.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gestores .sr-cri .nums{display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin:6px 0 0;font-size:12px}
+#gestores .sr-cri .nums dt{color:var(--txt2)}
+#gestores .sr-cri .nums dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt)}
+.sr.escuro #gestores .sr-cri{background:#1C1C20}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123c"></script>
+<script src="runtime.js?v=20261123d"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1116,8 +1135,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123c"></script>
-<script src="xlsx.js?v=20261123c"></script>
+<script src="config.js?v=20261123d"></script>
+<script src="xlsx.js?v=20261123d"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1239,8 +1258,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123c"></script>
-<script src="blocks.js?v=20261123c"></script>
+<script src="app.js?v=20261123d"></script>
+<script src="blocks.js?v=20261123d"></script>
 
 </div>
 </body>
