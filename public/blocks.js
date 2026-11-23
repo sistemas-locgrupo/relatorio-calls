@@ -848,7 +848,9 @@
     ['C1 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
     ['C2 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
     ['C3 - ATIVA - LOCAGORA', 'Rei do Tráfego'],
-    ['Localpha 01', 'Gabriel']
+    ['Localpha 01', 'Gabriel'],
+    ['LocAgora Conta 02 BM 02', 'Matheus'],
+    ['LocAgora Conta 03 BM 02 LMT', 'Matheus']
   ];
   const MAPA_CONTA = new Map(CONTAS_GESTOR.map(([c, g]) => [String(c).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(), g]));
   /* liga cada anúncio a um gestor: pela conta (tabela acima ou META_CONTAS) ou pelos leads do CRM com o mesmo utm_content */
