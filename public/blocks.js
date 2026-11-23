@@ -837,7 +837,7 @@
     if (!forcar && m.chave === chave && m.estado !== 'nada') return;
     m.chave = chave; m.estado = 'carregando'; m.erro = '';
     fetch('/api/meta?ini=' + F.a + '&fim=' + F.b + (forcar ? '&atualizar=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
-      .then(r => { const tipo = r.headers.get('content-type') || ''; if (!tipo.includes('json')) throw new Error('indisponivel'); return r.json(); })
+      .then(r => { const tipo = r.headers.get('content-type') || ''; if (!tipo.includes('json')) { if (r.status >= 500) return { ok: false, conectado: true, erro: 'O servidor respondeu com erro ' + r.status + '. Tente de novo em alguns minutos.' }; throw new Error('indisponivel'); } return r.json(); })
       .then(j => { if (m.chave !== chave) return; if (j.ok) { m.estado = 'ok'; m.dados = j; } else { m.estado = j.conectado === false ? 'desconectado' : 'erro'; m.erro = j.erro || ''; m.dados = null; } dash.draw('gestores'); })
       .catch(() => { if (m.chave !== chave) return; m.estado = 'indisponivel'; m.dados = null; dash.draw('gestores'); });
   }

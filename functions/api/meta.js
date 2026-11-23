@@ -95,6 +95,7 @@ export async function onRequestGet({ request, env }) {
     await cache.put(chaveCache, guardar);
     return resp;
   } catch (e) {
-    return json({ ok: false, conectado: true, erro: String(e.message || e) }, 502);
+    /* responde 200 com ok:false: um 5xx faz o Cloudflare trocar a resposta pela página "Bad gateway" e a mensagem se perde */
+    return json({ ok: false, conectado: true, erro: String(e.message || e) });
   }
 }
