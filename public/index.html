@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261123m">
+<link rel="stylesheet" href="fonts.css?v=20261123n">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -149,7 +149,9 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 #anuncios .sr-link{margin-top:8px}
 #anuncios .sr-metainfo{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px dashed var(--borda);border-radius:12px;font-size:13px;color:var(--txt)}
 #anuncios .sr-metainfo span{color:var(--txt2);font-size:12.5px}
-#anuncios .sr-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+#anuncios .sr-gal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+@media (max-width:1100px){#anuncios .sr-gal{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){#anuncios .sr-gal{grid-template-columns:1fr}}
 #anuncios .sr-cri{border:1px solid var(--borda);border-radius:14px;overflow:hidden;background:var(--card);display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(17,19,39,.04),0 8px 20px -14px rgba(17,19,39,.25)}
 #anuncios .sr-cri .fig{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:block;width:100%;aspect-ratio:1/1;background:var(--azul08);overflow:hidden}
 #anuncios .sr-cri .fig img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
@@ -201,7 +203,7 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 #anuncios .sr-ord:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261123m"></script>
+<script src="runtime.js?v=20261123n"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1208,8 +1210,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261123m"></script>
-<script src="xlsx.js?v=20261123m"></script>
+<script src="config.js?v=20261123n"></script>
+<script src="xlsx.js?v=20261123n"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1331,8 +1333,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261123m"></script>
-<script src="blocks.js?v=20261123m"></script>
+<script src="app.js?v=20261123n"></script>
+<script src="blocks.js?v=20261123n"></script>
 
 </div>
 </body>
