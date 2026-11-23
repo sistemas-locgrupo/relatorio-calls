@@ -1006,8 +1006,8 @@
         { k: 'vend', t: 'Vendas', v: m => m.vend.length, f: S.fInt, rows: m => m.vend, tit: 'Vendas', kind: 'l', dcols: DC_GV },
         { k: 'cplm', t: 'CPL Meta', v: m => div(m.gasto, m.leadsMeta), f: fR },
         { k: 'cpl', t: 'CPL CRM', v: m => div(m.gasto, m.leads.length), f: fR },
-        { k: 'cpc', t: 'Custo por call', v: m => div(m.gasto, m.calls.length), f: fR },
-        { k: 'cpr', t: 'Custo por realizada', v: m => div(m.gasto, m.realizadas.length), f: fR },
+        { k: 'cpc', t: 'Custo por call agendada', v: m => div(m.gasto, m.calls.length), f: fR },
+        { k: 'cpr', t: 'Custo por call realizada', v: m => div(m.gasto, m.realizadas.length), f: fR },
         { k: 'cac', t: 'CAC', v: m => div(m.gasto, m.vend.length), f: fR }
       ];
       const wm = E('div', 'sr-motw');
@@ -1040,7 +1040,8 @@
         ['ag', 'Agendadas', c => c.calls.length, S.fInt],
         ['re', 'Realizadas', c => c.reais.length, S.fInt],
         ['vd', 'Vendas', c => c.vend.length, S.fInt],
-        ['cpc', 'Custo por call', c => divR(c.gasto, c.calls.length), S.fBRL, true],
+        ['cpc', 'Custo por call agendada', c => divR(c.gasto, c.calls.length), S.fBRL, true],
+        ['cpr', 'Custo por call realizada', c => divR(c.gasto, c.reais.length), S.fBRL, true],
         ['cac', 'CAC', c => divR(c.gasto, c.vend.length), S.fBRL, true]
       ];
       const ordR = st.ordR || (st.ordR = { k: 'ag', dir: -1 });
@@ -1089,7 +1090,7 @@
         par('Investimento', S.fBRL(c.gasto)); par('Leads Meta', S.fInt(c.leads_meta)); par('CPL Meta', c.leads_meta ? S.fBRL(c.gasto / c.leads_meta) : '—'); par('Leads CRM', S.fInt(c.leads.length), c.leads, 'Leads do criativo', DC_GL);
         par('Agendadas', S.fInt(c.calls.length), c.calls, 'Calls do criativo', DC_GC); par('Realizadas', S.fInt(c.reais.length), c.reais, 'Realizadas do criativo', DC_GC);
         par('Vendas', S.fInt(c.vend.length), c.vend, 'Vendas do criativo', DC_GV);
-        par('Custo por call', c.calls.length ? S.fBRL(c.gasto / c.calls.length) : '—'); par('CAC', c.vend.length ? S.fBRL(c.gasto / c.vend.length) : '—');
+        par('Custo por agendada', c.calls.length && c.gasto ? S.fBRL(c.gasto / c.calls.length) : '—'); par('Custo por realizada', c.reais.length && c.gasto ? S.fBRL(c.gasto / c.reais.length) : '—'); par('CAC', c.vend.length && c.gasto ? S.fBRL(c.gasto / c.vend.length) : '—');
         corpo.appendChild(dl); cd.append(fig, corpo); gal.appendChild(cd);
       });
       if (cards.length) box.appendChild(gal); else box.appendChild(E('div', 'sr-empty', 'Nenhum anúncio com gasto no período.'));
@@ -1097,6 +1098,65 @@
       /* ordem na tela: vitrine, ranking e, por último, o investimento por gestor */
       const kids = [...box.children];
       box.append(...kids.slice(iVit), ...kids.slice(iRank, iVit), ...kids.slice(iInv, iRank));
+    }
+    /* perdas por criativo: oportunidades perdidas ou desqualificadas, pelo utm_content do lead, com o motivo */
+    {
+      const Pg = so(B.perd, fG), Lg2 = so(B.leads, fG);
+      sec('Perdas por criativo' + (st.sel ? ' de ' + st.sel : ''), 'oportunidades perdidas ou desqualificadas no período (pela criação), pelo criativo do lead e o motivo da perda');
+      if (!Pg.length) box.appendChild(E('div', 'sr-empty', 'Nenhuma perda no período.'));
+      else {
+        const criDe = r => S.limpa(r.utm_content) && r.utm_content !== 'Sem UTM' ? S.limpa(r.utm_content) : '';
+        const motDe = o => o.motivo_unificado || SEM_MOTIVO;
+        const topMot = d3.rollups(Pg, v => v.length, motDe).sort((a, b) => (a[0] === SEM_MOTIVO) - (b[0] === SEM_MOTIVO) || b[1] - a[1]).map(d => d[0]);
+        const MOTC = topMot.filter(m => m !== SEM_MOTIVO).slice(0, 5), temSem = topMot.includes(SEM_MOTIVO);
+        const leadsPor = d3.group(Lg2, r => normNome(criDe(r)));
+        const MGp = S.st.meta.estado === 'ok' ? metaPorGestor(B) : null;
+        const ordP = st.ordP || (st.ordP = { k: 'tot', dir: -1 });
+        let lin = d3.groups(Pg, r => normNome(criDe(r))).map(([k, rows]) => {
+          const nome = k ? criDe(rows[0]) : 'Sem criativo (utm_content)';
+          const mc = MGp && k ? MGp.porNome.get(k) : null;
+          const nl = (leadsPor.get(k) || []).length;
+          return { k, nome, rows, thumb: mc ? mc.thumb : '', gestor: (rows.find(r => r.gestor) || {}).gestor || '', leads: nl, taxa: nl ? rows.length / nl : null, por: d3.group(rows, motDe) };
+        });
+        const valP = l => ordP.k === 'tot' ? l.rows.length : ordP.k === 'taxa' ? (l.taxa == null ? -1 : l.taxa) : ordP.k === 'sem' ? (l.por.get(SEM_MOTIVO) || []).length : (l.por.get(ordP.k) || []).length;
+        lin.sort((a, b) => (!a.k) - (!b.k) || ordP.dir * (valP(a) - valP(b)) || b.rows.length - a.rows.length);
+        const nP = st.todosPerdas ? lin.length : Math.min(20, lin.length);
+        const tw = E('div', 'sr-tw sr-rkcri'), tbl = E('table', 'sr-t'), th = E('thead'), trh = E('tr');
+        trh.append(E('th', 'pos', '#'), E('th', '', 'Criativo'));
+        const colsP = [['tot', 'Perdas'], ['taxa', '% dos leads']].concat(MOTC.map(m => [m, m]), temSem ? [['sem', 'Sem motivo']] : []);
+        colsP.forEach(([k, t]) => {
+          const h = E('th', 'n'); const b = E('button', 'sr-ord' + (k === ordP.k ? ' on' : ''), t + (k === ordP.k ? (ordP.dir < 0 ? ' ↓' : ' ↑') : '')); b.type = 'button';
+          h.setAttribute('aria-sort', k === ordP.k ? (ordP.dir < 0 ? 'descending' : 'ascending') : 'none');
+          b.addEventListener('click', () => { st.ordP = { k, dir: k === ordP.k ? -ordP.dir : -1 }; dash.draw('anuncios'); });
+          h.appendChild(b); trh.appendChild(h);
+        });
+        th.appendChild(trh); tbl.appendChild(th);
+        const tb = E('tbody');
+        const cel = (rows, rot, nome, on) => { const td = E('td', 'n' + (on ? ' on' : '')); if (rows.length) { const b = E('button', 'sr-cell nm sr-plink', S.fInt(rows.length)); b.type = 'button'; b.addEventListener('click', () => S.abrir({ titulo: 'Perdas', recorte: ['Criativo: ' + nome].concat(rot ? ['Motivo: ' + rot] : [], st.sel ? ['Gestor: ' + st.sel] : []), rows, kind: 'l', cols: DC_GP })); td.appendChild(b); } else td.textContent = '·'; return td; };
+        lin.slice(0, nP).forEach((l, i) => {
+          const tr = E('tr'), tdn = E('td', 'cri');
+          const bt = E('button', 'sr-crib'); bt.type = 'button'; bt.title = l.k ? 'Ver o criativo e os números' : '';
+          if (l.k) bt.addEventListener('click', () => S.abrirCriativo(l.nome)); else bt.disabled = true;
+          const mini = E('span', 'mini'); if (l.thumb) { const im = E('img'); im.src = l.thumb; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; mini.appendChild(im); }
+          const tx = E('span', 'tx'); tx.append(E('b', '', l.nome), E('small', '', (l.gestor || SEM_GEST) + ' · ' + S.fInt(l.leads) + ' leads no período'));
+          bt.append(mini, tx); tdn.appendChild(bt);
+          tr.append(E('td', 'pos', l.k ? String(i + 1) : '—'), tdn);
+          tr.appendChild(cel(l.rows, '', l.nome, ordP.k === 'tot'));
+          tr.appendChild(E('td', 'n' + (ordP.k === 'taxa' ? ' on' : ''), l.taxa == null ? '—' : S.fP(l.taxa)));
+          MOTC.forEach(m => tr.appendChild(cel(l.por.get(m) || [], m, l.nome, ordP.k === m)));
+          if (temSem) tr.appendChild(cel(l.por.get(SEM_MOTIVO) || [], SEM_MOTIVO, l.nome, ordP.k === 'sem'));
+          tb.appendChild(tr);
+        });
+        const tf = E('tfoot'), trf = E('tr', 'tot'); trf.append(E('td', 'pos', ''), E('td', '', 'Total'));
+        trf.appendChild(cel(Pg, '', 'todos', false)); trf.appendChild(E('td', 'n', Lg2.length ? S.fP(Pg.length / Lg2.length) : '—'));
+        MOTC.forEach(m => trf.appendChild(cel(Pg.filter(o => motDe(o) === m), m, 'todos', false)));
+        if (temSem) trf.appendChild(cel(Pg.filter(o => motDe(o) === SEM_MOTIVO), SEM_MOTIVO, 'todos', false));
+        tf.appendChild(trf);
+        tbl.append(tb, tf); tw.appendChild(tbl); box.appendChild(tw);
+        if (lin.length > 20) { const mb = E('button', 'sr-link', st.todosPerdas ? 'Mostrar só os 20 primeiros' : `Mostrar todos os ${S.fInt(lin.length)} criativos`); mb.type = 'button'; mb.addEventListener('click', () => { st.todosPerdas = !st.todosPerdas; dash.draw('anuncios'); }); box.appendChild(mb); }
+        const semPct = Pg.length ? (Pg.filter(o => !o.motivo_unificado).length / Pg.length) : 0;
+        if (semPct > .5) box.appendChild(E('p', 'sr-hint', `${S.fP(semPct)} das perdas estão sem motivo no CRM: as colunas de motivo ficam mais úteis conforme o time preencher o motivo da perda.`));
+      }
     }
     el.replaceChildren(box);
   });
@@ -1177,7 +1237,7 @@
       item('Cliques no link', MM(S.fInt(c.cliques))); item('CTR', c.impressoes && !c.semMeta ? S.fP(c.cliques / c.impressoes) : '—'); item('Leads Meta', MM(S.fInt(c.leads_meta)));
       item('CPL Meta', R(div(c.gasto, c.leads_meta))); item('Leads CRM', S.fInt(c.leads.length), c.leads, 'Leads do criativo', DC_GL); item('CPL CRM', R(div(c.gasto, c.leads.length)));
       item('Agendadas', S.fInt(c.calls.length), c.calls, 'Calls do criativo', DC_GC); item('Realizadas', S.fInt(c.reais.length), c.reais, 'Realizadas do criativo', DC_GC); item('Vendas', S.fInt(c.vend.length), c.vend, 'Vendas do criativo', DC_GV);
-      item('Custo por call', R(div(c.gasto, c.calls.length))); item('Custo por realizada', R(div(c.gasto, c.reais.length))); item('CAC', R(div(c.gasto, c.vend.length)));
+      item('Custo por call agendada', R(div(c.gasto, c.calls.length))); item('Custo por call realizada', R(div(c.gasto, c.reais.length))); item('CAC', R(div(c.gasto, c.vend.length)));
       corpo.appendChild(kp);
       const acoes = E('div', 'sr-row');
       const lk = (det.ok && det.link) || c.link;
