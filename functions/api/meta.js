@@ -6,12 +6,15 @@
      META_TOKEN   token do usuário do sistema do Business Manager, com a permissão ads_read
      META_CONTAS  (opcional) contas e gestores, ex.: "act_123:Gabriel,act_456:Matheus".
                   Sem ela, usa todas as contas de anúncio que o usuário do sistema enxerga.
-     META_VERSAO  (opcional) versão da Graph API, ex.: v26.0. Sem ela, usa a versão padrão do app
+     META_VERSAO  (opcional) versão da Graph API, ex.: v27.0. Se o Meta disser que a versão saiu de uso,
+                  o relatório passa sozinho para a versão que o Meta indicar.
 */
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 
 const okDia = d => /^\d{4}-\d{2}-\d{2}$/.test(d || '');
+const VERSAO_PADRAO = 'v27.0';
+let versaoAuto = null; /* versão que o próprio Meta mandou usar (erro 2635) */
 const TIPOS_LEAD = ['lead', 'onsite_conversion.lead_grouped', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead'];
 
 async function graph(url, tentativas = 2) {
@@ -22,10 +25,17 @@ async function graph(url, tentativas = 2) {
     const e = j.error || {};
     /* limite de chamadas do Meta: espera um pouco e tenta de novo */
     if (i < tentativas && (r.status === 429 || [4, 17, 32, 613].includes(e.code))) { await new Promise(s => setTimeout(s, 1500 * (i + 1))); continue; }
+    /* versão da API saiu de uso: o Meta diz qual usar; troca e tenta de novo */
+    const nova = e.code === 2635 && /v\d+\.\d+/.exec(e.message || '');
+    if (nova && i < tentativas + 1 && !url.includes('/' + nova[0] + '/')) {
+      versaoAuto = nova[0];
+      url = url.replace(/^https:\/\/graph\.facebook\.com\/(v\d+\.\d+\/)?/, 'https://graph.facebook.com/' + versaoAuto + '/');
+      continue;
+    }
     const det = ` [Meta: ${e.message || r.status}${e.error_subcode ? ' · subcódigo ' + e.error_subcode : ''}]`;
     const msg = e.code === 190 ? 'O token do Meta é inválido ou expirou. Gere outro no Business Manager e atualize o segredo META_TOKEN.' + det
       : e.code === 10 || e.code === 200 ? 'O token do Meta não tem permissão de leitura (ads_read) numa das contas.' + det
-      : 'O Meta respondeu com erro: ' + (e.message || r.status);
+      : 'O Meta respondeu com erro: ' + (e.message || r.status) + (e.code ? ' (código ' + e.code + ')' : '');
     throw new Error(msg);
   }
 }
@@ -48,17 +58,17 @@ export async function onRequestGet({ request, env }) {
     const cache = caches.default;
     if (u.searchParams.get('atualizar') !== '1') { const c = await cache.match(chaveCache); if (c) return new Response(c.body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } }); }
 
-    const V = String(env.META_VERSAO || '').trim(), T = encodeURIComponent(String(env.META_TOKEN).replace(/[\s"']/g, ''));
-    const base = 'https://graph.facebook.com/' + (V ? V.replace(/\/$/, '') + '/' : '');
+    const V = String(env.META_VERSAO || '').trim().replace(/\/$/, ''), T = encodeURIComponent(String(env.META_TOKEN).replace(/[\s"']/g, ''));
+    const B = () => 'https://graph.facebook.com/' + (versaoAuto || V || VERSAO_PADRAO) + '/';
 
     /* contas: as de META_CONTAS ou todas que o usuário do sistema enxerga */
     let contas = [];
     const cfg = String(env.META_CONTAS || '').split(',').map(s => s.trim()).filter(Boolean);
     if (cfg.length) {
       contas = cfg.map(s => { const [id, g] = s.split(':'); const a = id.trim(); return { id: a.startsWith('act_') ? a : 'act_' + a, gestor: (g || '').trim() }; });
-      for (const c of contas) { const n = await graph(`${base}${c.id}?fields=name,currency&access_token=${T}`); c.nome = n.name || c.id; c.moeda = n.currency || 'BRL'; }
+      for (const c of contas) { const n = await graph(`${B()}${c.id}?fields=name,currency&access_token=${T}`); c.nome = n.name || c.id; c.moeda = n.currency || 'BRL'; }
     } else {
-      const lista = await todas(`${base}me/adaccounts?fields=id,name,currency,account_status&limit=200&access_token=${T}`);
+      const lista = await todas(`${B()}me/adaccounts?fields=id,name,currency,account_status&limit=200&access_token=${T}`);
       contas = lista.map(a => ({ id: a.id, nome: a.name, moeda: a.currency || 'BRL', gestor: '' }));
     }
     if (!contas.length) return json({ ok: false, conectado: true, erro: 'O usuário do sistema do Meta não tem nenhuma conta de anúncio atribuída.' });
@@ -66,7 +76,7 @@ export async function onRequestGet({ request, env }) {
     const tr = encodeURIComponent(JSON.stringify({ since: ini, until: fim }));
     const anuncios = [];
     for (const c of contas) {
-      const ins = await todas(`${base}${c.id}/insights?level=ad&time_range=${tr}&fields=ad_id,ad_name,adset_name,campaign_name,spend,impressions,clicks,actions&limit=500&access_token=${T}`);
+      const ins = await todas(`${B()}${c.id}/insights?level=ad&time_range=${tr}&fields=ad_id,ad_name,adset_name,campaign_name,spend,impressions,clicks,actions&limit=500&access_token=${T}`);
       ins.forEach(x => {
         const acts = x.actions || [];
         const porTipo = t => { const a = acts.find(y => y.action_type === t); return a ? Number(a.value) || 0 : 0; };
@@ -83,7 +93,7 @@ export async function onRequestGet({ request, env }) {
       const ids = [...new Set(anuncios.filter(a => a.conta === c.id).map(a => a.ad_id).filter(Boolean))];
       for (let i = 0; i < ids.length; i += 50) {
         const filtro = encodeURIComponent(JSON.stringify([{ field: 'id', operator: 'IN', value: ids.slice(i, i + 50) }]));
-        const lista = await todas(`${base}${c.id}/ads?fields=id,preview_shareable_link,creative{thumbnail_url,image_url,instagram_permalink_url,effective_object_story_id}&thumbnail_width=320&thumbnail_height=320&filtering=${filtro}&limit=50&access_token=${T}`);
+        const lista = await todas(`${B()}${c.id}/ads?fields=id,preview_shareable_link,creative{thumbnail_url,image_url,instagram_permalink_url,effective_object_story_id}&thumbnail_width=320&thumbnail_height=320&filtering=${filtro}&limit=50&access_token=${T}`);
         lista.forEach(v => {
           const cr = v.creative || {};
           const post = cr.effective_object_story_id ? 'https://www.facebook.com/' + cr.effective_object_story_id : '';
@@ -94,7 +104,7 @@ export async function onRequestGet({ request, env }) {
     } catch (e) { avisoCriativo = 'Os números vieram, mas as imagens dos criativos não: ' + String(e.message || e); }
     anuncios.forEach(a => Object.assign(a, cri[a.ad_id] || { thumb: '', imagem: '', link: '' }));
 
-    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), contas, anuncios, aviso: avisoCriativo });
+    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), versao: versaoAuto || V || VERSAO_PADRAO, contas, anuncios, aviso: avisoCriativo });
     const guardar = new Response(resp.clone().body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900' } });
     await cache.put(chaveCache, guardar);
     return resp;
