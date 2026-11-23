@@ -948,6 +948,7 @@
         aoOrdenar: (k, dir) => { st.ordM = { k, dir }; dash.draw('gestores'); },
         nomeAcao: g => ({ fn: () => S.abrir({ titulo: 'Leads de canal Meta', recorte: ['Gestor: ' + g.nome], rows: g.m.leads, kind: 'l', cols: DC_GL }) }) });
       box.appendChild(wm);
+      if (MS.dados.aviso) box.appendChild(cardMeta('Imagens dos criativos indisponíveis', MS.dados.aviso));
       const at = E('p', 'sr-hint'); at.textContent = `Dados do Meta de ${S.fData(MS.dados.ini)} a ${S.fData(MS.dados.fim)} · atualizados às ${S.fDataHora(MS.dados.gerado).slice(-5)} · contas: ${MS.dados.contas.map(c => c.nome).join(', ')}. Leads CRM, calls e vendas contam só leads de canal Meta. `;
       const up = E('button', 'sr-link', 'Atualizar agora'); up.type = 'button'; up.addEventListener('click', () => carregarMeta(B.F, true)); at.appendChild(up);
       box.appendChild(at);

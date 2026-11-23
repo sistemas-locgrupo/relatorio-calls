@@ -6,7 +6,7 @@
      META_TOKEN   token do usuário do sistema do Business Manager, com a permissão ads_read
      META_CONTAS  (opcional) contas e gestores, ex.: "act_123:Gabriel,act_456:Matheus".
                   Sem ela, usa todas as contas de anúncio que o usuário do sistema enxerga.
-     META_VERSAO  (opcional) versão da Graph API, padrão v23.0
+     META_VERSAO  (opcional) versão da Graph API, ex.: v26.0. Sem ela, usa a versão padrão do app
 */
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
@@ -48,16 +48,15 @@ export async function onRequestGet({ request, env }) {
     const cache = caches.default;
     if (u.searchParams.get('atualizar') !== '1') { const c = await cache.match(chaveCache); if (c) return new Response(c.body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } }); }
 
-    const V = String(env.META_VERSAO || 'v23.0').trim(), T = encodeURIComponent(String(env.META_TOKEN).replace(/[\s"']/g, ''));
-    const base = `https://graph.facebook.com/${V}/`;
+    const V = String(env.META_VERSAO || '').trim(), T = encodeURIComponent(String(env.META_TOKEN).replace(/[\s"']/g, ''));
+    const base = 'https://graph.facebook.com/' + (V ? V.replace(/\/$/, '') + '/' : '');
 
     /* contas: as de META_CONTAS ou todas que o usuário do sistema enxerga */
     let contas = [];
     const cfg = String(env.META_CONTAS || '').split(',').map(s => s.trim()).filter(Boolean);
     if (cfg.length) {
       contas = cfg.map(s => { const [id, g] = s.split(':'); const a = id.trim(); return { id: a.startsWith('act_') ? a : 'act_' + a, gestor: (g || '').trim() }; });
-      const nomes = await graph(`${base}?ids=${contas.map(c => c.id).join(',')}&fields=name,currency,account_status&access_token=${T}`);
-      contas.forEach(c => { const n = nomes[c.id] || {}; c.nome = n.name || c.id; c.moeda = n.currency || 'BRL'; });
+      for (const c of contas) { const n = await graph(`${base}${c.id}?fields=name,currency&access_token=${T}`); c.nome = n.name || c.id; c.moeda = n.currency || 'BRL'; }
     } else {
       const lista = await todas(`${base}me/adaccounts?fields=id,name,currency,account_status&limit=200&access_token=${T}`);
       contas = lista.map(a => ({ id: a.id, nome: a.name, moeda: a.currency || 'BRL', gestor: '' }));
@@ -77,21 +76,25 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    /* criativo de cada anúncio (miniatura, imagem e link de prévia), de 50 em 50 */
-    const ids = [...new Set(anuncios.map(a => a.ad_id).filter(Boolean))];
-    const cri = {};
-    for (let i = 0; i < ids.length; i += 50) {
-      const lote = ids.slice(i, i + 50).join(',');
-      const j = await graph(`${base}?ids=${lote}&fields=preview_shareable_link,creative{thumbnail_url,image_url,instagram_permalink_url,effective_object_story_id}&thumbnail_width=320&thumbnail_height=320&access_token=${T}`);
-      Object.entries(j).forEach(([id, v]) => {
-        const cr = v.creative || {};
-        const post = cr.effective_object_story_id ? 'https://www.facebook.com/' + cr.effective_object_story_id : '';
-        cri[id] = { thumb: cr.thumbnail_url || cr.image_url || '', imagem: cr.image_url || cr.thumbnail_url || '', link: v.preview_shareable_link || cr.instagram_permalink_url || post };
-      });
+    /* criativo de cada anúncio (miniatura, imagem e link de prévia): pela conta, filtrando os ids, de 50 em 50 */
+    const cri = {}; let avisoCriativo = '';
+    try {
+    for (const c of contas) {
+      const ids = [...new Set(anuncios.filter(a => a.conta === c.id).map(a => a.ad_id).filter(Boolean))];
+      for (let i = 0; i < ids.length; i += 50) {
+        const filtro = encodeURIComponent(JSON.stringify([{ field: 'id', operator: 'IN', value: ids.slice(i, i + 50) }]));
+        const lista = await todas(`${base}${c.id}/ads?fields=id,preview_shareable_link,creative{thumbnail_url,image_url,instagram_permalink_url,effective_object_story_id}&thumbnail_width=320&thumbnail_height=320&filtering=${filtro}&limit=50&access_token=${T}`);
+        lista.forEach(v => {
+          const cr = v.creative || {};
+          const post = cr.effective_object_story_id ? 'https://www.facebook.com/' + cr.effective_object_story_id : '';
+          cri[v.id] = { thumb: cr.thumbnail_url || cr.image_url || '', imagem: cr.image_url || cr.thumbnail_url || '', link: v.preview_shareable_link || cr.instagram_permalink_url || post };
+        });
+      }
     }
+    } catch (e) { avisoCriativo = 'Os números vieram, mas as imagens dos criativos não: ' + String(e.message || e); }
     anuncios.forEach(a => Object.assign(a, cri[a.ad_id] || { thumb: '', imagem: '', link: '' }));
 
-    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), contas, anuncios });
+    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), contas, anuncios, aviso: avisoCriativo });
     const guardar = new Response(resp.clone().body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900' } });
     await cache.put(chaveCache, guardar);
     return resp;
