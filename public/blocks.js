@@ -803,7 +803,7 @@
     r._gestOk = true; return r;
   }
   const DC_GL = ['lead_nome', 'gestor', 'campanha_gestor', 'canal_geral', 'canal_gestor', 'data_entrada', 'tags', 'fonte', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'sdr_responsavel_nome', 'closer_nome', 'etapa_atual', 'data_agendamento', 'link_gravacao', 'resultado'];
-  const DC_GC = ['lead_nome', 'gestor', 'campanha_gestor', 'sdr_agendou_nome', 'closer_nome', 'data_agendamento', 'data_reuniao', 'status', 'link_gravacao', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tags', 'resultado'];
+  const DC_GC = ['lead_nome', 'gestor', 'campanha_gestor', 'sdr_agendou_nome', 'closer_nome', 'closer_agendado', 'data_agendamento', 'data_reuniao', 'status', 'link_gravacao', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tags', 'resultado'];
   const DC_GV = ['lead_nome', 'gestor', 'campanha_gestor', 'data_fechamento', 'valor', 'closer_nome', 'sdr_origem_nome', 'modelo_franquia', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tags'];
   const DC_GP = ['lead_nome', 'gestor', 'campanha_gestor', 'motivo_unificado', 'motivo_perda_custom', 'motivo_perda_nativo', 'etapa_atual', 'resultado_neg', 'vendedor', 'sdr_origem_nome', 'data_criacao', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'tags'];
   S.st.gest = S.st.gest || { sel: '', ordG: { k: 'leads', dir: -1 }, ordC: { k: 'leads', dir: -1 }, ordK: { k: 'calls', dir: -1 }, todosCri: false };

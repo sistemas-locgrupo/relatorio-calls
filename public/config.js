@@ -43,6 +43,10 @@ window.SR_CONFIG = {
     aberto:  ['aberto', 'open']
   },
 
+  /* Nomes que não contam como closer em nenhum relatório (gestores, testes).
+     As calls deles ficam com o closer da reunião ou, sem ele, em "Sem closer". */
+  closersIgnorados: ['Arthur Parentoni'],
+
   /* Rótulos que aparecem na tela e nos arquivos. */
   rotulos: {
     agendada: 'Agendada',

@@ -284,6 +284,7 @@ window.SR = (function () {
     { k: 'tag_campanha', t: 'Tag de campanha', g: r => txt(r.tag_campanha) },
     { k: 'sdr_agendou_nome', t: 'SDR que agendou', g: r => txt(r.sdr_agendou_nome) },
     { k: 'closer_nome', t: 'Closer', g: r => txt(r.closer_nome) },
+    { k: 'closer_agendado', t: 'Closer da agenda', g: r => txt(r.closer_agendado) },
     { k: 'data_agendamento', t: 'Data do agendamento', g: r => fDataHora(r.data_agendamento), s: r => r.data_agendamento || '' },
     { k: 'data_reuniao', t: 'Data da reunião', g: r => fDataHora(r.data_reuniao), s: r => r.data_reuniao || '' },
     { k: 'data_fechamento', t: 'Data de fechamento', g: r => fDataHora(r.data_fechamento), s: r => r.data_fechamento || '' },
