@@ -47,6 +47,17 @@ window.SR_CONFIG = {
      Call sem link cujo lead/oportunidade está com eles conta em "Sem closer". */
   closersIgnorados: ['Arthur Parentoni', 'Bruno Vieira'],
 
+  /* Metas do mês (página Metas). Deixe null para não ter meta.
+     "padrao" vale para todo mundo do papel; um nome (como aparece no CRM) substitui o padrão.
+     Exemplo: sdr: { padrao: { agendadas: 60, realizadas: 40 }, 'Kamylle Cruz': { agendadas: 70 } } */
+  metas: {
+    time:   { leads: null, agendadas: null, realizadas: null, vendas: null, valor: null },
+    sdr:    { padrao: { agendadas: null, realizadas: null } },
+    closer: { padrao: { realizadas: null, vendas: null, valor: null } },
+    /* dias que contam para a projeção: 0 = domingo, 1 = segunda ... 6 = sábado */
+    diasUteis: [1, 2, 3, 4, 5]
+  },
+
   /* Rótulos que aparecem na tela e nos arquivos. */
   rotulos: {
     agendada: 'Agendada',

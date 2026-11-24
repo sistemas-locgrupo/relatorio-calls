@@ -22,7 +22,7 @@ export async function onRequestGet({ request, env }) {
     if (!okDia(ini) || !okDia(fim)) return json({ ok: false, erro: 'Período inválido.' }, 400);
 
     /* cache de 15 minutos por período, para não estourar o limite de chamadas do Meta */
-    const chaveCache = new Request(u.origin + '/__meta_cache?ini=' + ini + '&fim=' + fim + '&c=' + encodeURIComponent(env.META_CONTAS || ''));
+    const chaveCache = new Request(u.origin + '/__meta_cache?ini=' + ini + '&fim=' + fim + '&c=' + encodeURIComponent(env.META_CONTAS || '') + '&v=2');
     const cache = caches.default;
     if (u.searchParams.get('atualizar') !== '1') { const c = await cache.match(chaveCache); if (c) return new Response(c.body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } }); }
 
@@ -53,6 +53,19 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
+    /* gasto e leads por dia de cada conta (tendência diária). Se falhar, o resto continua */
+    let diario = [];
+    try {
+      for (const c of contas) {
+        const ds = await todas(`${B()}${c.id}/insights?level=account&time_increment=1&time_range=${tr}&fields=spend,actions,date_start&limit=500&access_token=${T}`);
+        ds.forEach(x => {
+          const acts = x.actions || [];
+          const porTipo = t => { const a = acts.find(y => y.action_type === t); return a ? Number(a.value) || 0 : 0; };
+          diario.push({ conta: c.id, dia: x.date_start, gasto: Number(x.spend) || 0, leads_meta: porTipo('lead') || TIPOS_LEAD.slice(1).reduce((s, t) => s + porTipo(t), 0) });
+        });
+      }
+    } catch (e) { diario = null; }
+
     /* criativo de cada anúncio (miniatura, imagem e link de prévia): pela conta, filtrando os ids, de 50 em 50 */
     const cri = {}; let avisoCriativo = '';
     try {
@@ -71,7 +84,7 @@ export async function onRequestGet({ request, env }) {
     } catch (e) { avisoCriativo = 'Os números vieram, mas as imagens dos criativos não: ' + String(e.message || e); }
     anuncios.forEach(a => Object.assign(a, cri[a.ad_id] || { thumb: '', imagem: '', link: '' }));
 
-    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), versao: versaoAtual(env), contas, anuncios, aviso: avisoCriativo });
+    const resp = json({ ok: true, conectado: true, ini, fim, gerado: new Date().toISOString(), versao: versaoAtual(env), contas, anuncios, diario, aviso: avisoCriativo });
     const guardar = new Response(resp.clone().body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900' } });
     await cache.put(chaveCache, guardar);
     return resp;

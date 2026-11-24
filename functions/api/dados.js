@@ -1,5 +1,5 @@
 /* GET /api/dados
-   Lê as abas leads, reunioes e negocios da planilha com a conta de serviço do Google
+   Lê as abas leads, reunioes, negocios e higiene da planilha com a conta de serviço do Google
    e devolve para a página. Só responde a quem está logado (o _middleware.js confere a sessão).
 
    Segredos (Settings → Variables and secrets do projeto no Cloudflare Pages):
@@ -7,7 +7,7 @@
      GOOGLE_SA_KEY    o campo "private_key" do arquivo JSON da chave
      SHEET_ID         id da planilha
 */
-const ABAS = { leads: 'leads!A:Z', reunioes: 'reunioes!A:Z', negocios: 'negocios!A:AC' };
+const ABAS = { leads: 'leads!A:Z', reunioes: 'reunioes!A:Z', negocios: 'negocios!A:AC', higiene: 'higiene!A:J' };
 let tokenCache = null;
 
 const json = (obj, status = 200, extra = {}) =>
@@ -65,7 +65,7 @@ export async function onRequestGet({ request, env }) {
     }
     /* repassa a resposta do Google sem abrir o JSON aqui: abrir e remontar os dados
        estoura o limite de processamento do plano grátis do Cloudflare (erro 503).
-       A página separa as abas pela ordem: leads, reunioes, negocios. */
+       A página separa as abas pela ordem: leads, reunioes, negocios, higiene. */
     return new Response(r.body, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'private, max-age=60', 'x-abas': Object.keys(ABAS).join(',') } });
   } catch (e) {
     return json({ erro: String(e.message || e) }, 500);

@@ -317,6 +317,13 @@ window.SR = (function () {
     { k: 'pipeline', t: 'Pipeline', g: r => txt(r.pipeline) },
     { k: 'data_criacao', t: 'Criação da oportunidade', g: r => fDataHora(r.data_criacao), s: r => r.data_criacao || '' },
     { k: 'resultado_neg', t: 'Resultado da oportunidade', g: r => txt(r.resultado) },
+    { k: 'primeiro_agendamento', t: '1º agendamento', g: r => fDataHora(r.primeiro_agendamento), s: r => r.primeiro_agendamento || '' },
+    { k: 'horas_ate_agendar', t: 'Tempo até agendar', g: r => r._hAg == null ? '' : (r._hAg < 48 ? f1(r._hAg).replace(/,0$/, '') + ' h' : fDias(r._hAg / 24)), s: r => r._hAg == null ? Infinity : r._hAg, n: true, x: r => r._hAg == null ? '' : Math.round(r._hAg * 10) / 10 },
+    { k: 'horas_sem_contato', t: 'Horas desde a entrada', g: r => r._hNovo == null ? '' : String(Math.floor(r._hNovo)) + ' h', s: r => r._hNovo || 0, n: true, x: r => r._hNovo == null ? '' : Math.floor(r._hNovo) },
+    { k: 'antecedencia', t: 'Antecedência (dias)', g: r => r.dias_agendamento_ate_reuniao === '' || r.dias_agendamento_ate_reuniao == null ? '' : f1(Number(r.dias_agendamento_ate_reuniao)), s: r => Number(r.dias_agendamento_ate_reuniao) || 0, n: true, x: r => r.dias_agendamento_ate_reuniao === '' ? '' : Number(r.dias_agendamento_ate_reuniao) },
+    { k: 'dias_ate_venda', t: 'Dias da entrada à venda', g: r => r.dias_ate_venda === '' || r.dias_ate_venda == null ? '' : f1(r.dias_ate_venda), s: r => Number(r.dias_ate_venda) || 0, n: true, x: r => r.dias_ate_venda === '' || r.dias_ate_venda == null ? '' : r.dias_ate_venda },
+    { k: 'problema_crm', t: 'Problema no CRM', g: r => txt(r.problema_crm) },
+    { k: 'data_verificacao', t: 'Conferido em', g: r => fDataHora(r.data_verificacao), s: r => r.data_verificacao || '' },
     { k: 'dias_parado', t: 'Dias sem movimentação', g: r => r._parado == null ? '' : String(Math.floor(r._parado)), s: r => r._parado || 0, n: true, x: r => r._parado == null ? '' : Math.floor(r._parado) }
   ];
   const COLS_PADRAO = ['lead_nome', 'data_entrada', 'utm_campaign', 'utm_content', 'tag_campanha', 'sdr_agendou_nome', 'closer_nome', 'data_agendamento', 'data_reuniao', 'status', 'resultado', 'valor'];
