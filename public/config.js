@@ -44,8 +44,8 @@ window.SR_CONFIG = {
   },
 
   /* Nomes que não contam como closer em nenhum relatório (gestores, testes).
-     As calls deles ficam com o closer da reunião ou, sem ele, em "Sem closer". */
-  closersIgnorados: ['Arthur Parentoni'],
+     Call sem link cujo lead/oportunidade está com eles conta em "Sem closer". */
+  closersIgnorados: ['Arthur Parentoni', 'Bruno Vieira'],
 
   /* Rótulos que aparecem na tela e nos arquivos. */
   rotulos: {

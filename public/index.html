@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261124b">
+<link rel="stylesheet" href="fonts.css?v=20261124c">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -226,7 +226,7 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 @media (max-width:1100px){#anuncios .sr-rkcri{overflow-x:auto}#anuncios .sr-rkcri table{table-layout:auto;min-width:1000px}}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261124b"></script>
+<script src="runtime.js?v=20261124c"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1247,8 +1247,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261124b"></script>
-<script src="xlsx.js?v=20261124b"></script>
+<script src="config.js?v=20261124c"></script>
+<script src="xlsx.js?v=20261124c"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1336,7 +1336,8 @@ dash.calc('base_unificada', {
       /* não troca quando a oportunidade ainda está no funil SDR (lá o dono é o SDR) */
       const noSdr = n(pick(o.pipeline, l.pipeline_atual)) === 'sdr';
       const dono = pick(o.dono_atual_nome, l.dono_atual_nome);
-      return !noSdr && dono && !IGN.has(n(dono)) && CLOSERS.has(n(dono)) ? dono : daReuniao;
+      if (!noSdr && dono && IGN.has(n(dono))) return '';
+      return !noSdr && dono && CLOSERS.has(n(dono)) ? dono : daReuniao;
     };
     const linha = (l, r, o) => {
       const rr = r || {}, da = rr.data_agendamento || '', dr = rr.data_reuniao || '', rg = grupoResultado(o), gv = r ? gravacao(rr.link_gravacao) : { s: '', m: '' };
@@ -1386,8 +1387,8 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261124b"></script>
-<script src="blocks.js?v=20261124b"></script>
+<script src="app.js?v=20261124c"></script>
+<script src="blocks.js?v=20261124c"></script>
 
 </div>
 </body>
