@@ -322,6 +322,7 @@ window.SR = (function () {
     { k: 'horas_sem_contato', t: 'Horas desde a entrada', g: r => r._hNovo == null ? '' : String(Math.floor(r._hNovo)) + ' h', s: r => r._hNovo || 0, n: true, x: r => r._hNovo == null ? '' : Math.floor(r._hNovo) },
     { k: 'antecedencia', t: 'Antecedência (dias)', g: r => r.dias_agendamento_ate_reuniao === '' || r.dias_agendamento_ate_reuniao == null ? '' : f1(Number(r.dias_agendamento_ate_reuniao)), s: r => Number(r.dias_agendamento_ate_reuniao) || 0, n: true, x: r => r.dias_agendamento_ate_reuniao === '' ? '' : Number(r.dias_agendamento_ate_reuniao) },
     { k: 'dias_ate_venda', t: 'Dias da entrada à venda', g: r => r.dias_ate_venda === '' || r.dias_ate_venda == null ? '' : f1(r.dias_ate_venda), s: r => Number(r.dias_ate_venda) || 0, n: true, x: r => r.dias_ate_venda === '' || r.dias_ate_venda == null ? '' : r.dias_ate_venda },
+    { k: 'custo_lead', t: 'Custo do lead', g: r => r._custo == null ? 'sem custo' : fBRL(r._custo), s: r => r._custo == null ? -1 : r._custo, n: true, x: r => r._custo == null ? '' : Math.round(r._custo * 100) / 100 },
     { k: 'problema_crm', t: 'Problema no CRM', g: r => txt(r.problema_crm) },
     { k: 'data_verificacao', t: 'Conferido em', g: r => fDataHora(r.data_verificacao), s: r => r.data_verificacao || '' },
     { k: 'dias_parado', t: 'Dias sem movimentação', g: r => r._parado == null ? '' : String(Math.floor(r._parado)), s: r => r._parado || 0, n: true, x: r => r._parado == null ? '' : Math.floor(r._parado) }

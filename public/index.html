@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261124f">
+<link rel="stylesheet" href="fonts.css?v=20261124g">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -226,7 +226,7 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 @media (max-width:1100px){#anuncios .sr-rkcri{overflow-x:auto}#anuncios .sr-rkcri table{table-layout:auto;min-width:1000px}}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261124f"></script>
+<script src="runtime.js?v=20261124g"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -936,6 +936,14 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
 .sr-alok{margin:0}
 .sr-g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .sr-roi .sr-t{table-layout:auto}.sr-roi .sr-t th,.sr-roi .sr-t td{padding-left:6px;padding-right:6px}.sr-roi .sr-t th{white-space:normal;line-height:1.25}.sr-roi td.nome .sr-cell.nm{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.sr-cvt .sr-t th,.sr-cvt .sr-t td{padding-left:6px;padding-right:6px}.sr-cvt .sr-t th{white-space:normal;line-height:1.25}
+.sr-cmx th.n{max-width:130px;white-space:normal;line-height:1.25;font-size:11.5px}
+.sr-cmx td.n{text-align:right;vertical-align:middle}
+.sr-cmx td .sr-cell{display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.2}
+.sr-cmx td .sr-cell small{font-size:11px;color:var(--txt2);font-weight:500}
+.sr-cmx td.tot,.sr-cmx th.tot{background:var(--sub)}
+.sr-cmx .z{color:var(--borda2)}
+.sr-cmx tfoot td{font-weight:700}
 .sr-gvel{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:24px}
 @media (max-width:1300px){.sr-gvel{grid-template-columns:minmax(0,1fr)}}
 .sr-hbt{grid-template-columns:minmax(0,1fr) 120px 128px}
@@ -1003,6 +1011,7 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
         <div class="sr-navsub" id="ng-gestores">
         <button type="button" data-ir="gestores"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Visão por gestor</span></button>
         <button type="button" data-ir="anuncios"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg><span>Gerenciador de anúncios</span></button>
+        <button type="button" data-ir="custo"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg><span>Custo por vendedor</span></button>
         </div>
       </div>
       <button type="button" data-ir="perdas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg><span>Perdas</span></button>
@@ -1019,7 +1028,7 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <main class="sr-main">
     <header class="sr-head" id="cabecalho">
       <div class="sr-tt">
-        <h1 class="sr-title"><span data-tit="progressao">Visão geral</span><span data-tit="geral" hidden>Calls e leads · Geral</span><span data-tit="vendas" hidden>Vendas · Geral</span><span data-tit="conversao" hidden>Taxa de conversão</span><span data-tit="saude" hidden>Saúde do funil</span><span data-tit="leads-sdr" hidden>Leads por SDR</span><span data-tit="gestores" hidden>Gestores de tráfego</span><span data-tit="anuncios" hidden>Gerenciador de anúncios</span><span data-tit="perdas" hidden>Desqualificações e perdas</span><span data-tit="ranking-tags" hidden>Ranking</span><span data-tit="gravacoes-pendentes" hidden>Qualidade</span><span data-tit="origem" hidden>Origem das calls</span><span data-tit="analises" hidden>Análise</span><span data-tit="metas" hidden>Metas do mês</span><span data-tit="noshow" hidden>No-show</span><span data-tit="ciclo" hidden>Ciclo e velocidade</span></h1>
+        <h1 class="sr-title"><span data-tit="progressao">Visão geral</span><span data-tit="geral" hidden>Calls e leads · Geral</span><span data-tit="vendas" hidden>Vendas · Geral</span><span data-tit="conversao" hidden>Taxa de conversão</span><span data-tit="saude" hidden>Saúde do funil</span><span data-tit="leads-sdr" hidden>Leads por SDR</span><span data-tit="gestores" hidden>Gestores de tráfego</span><span data-tit="anuncios" hidden>Gerenciador de anúncios</span><span data-tit="custo" hidden>Custo por vendedor</span><span data-tit="perdas" hidden>Desqualificações e perdas</span><span data-tit="ranking-tags" hidden>Ranking</span><span data-tit="gravacoes-pendentes" hidden>Qualidade</span><span data-tit="origem" hidden>Origem das calls</span><span data-tit="analises" hidden>Análise</span><span data-tit="metas" hidden>Metas do mês</span><span data-tit="noshow" hidden>No-show</span><span data-tit="ciclo" hidden>Ciclo e velocidade</span></h1>
         <span class="sr-upd" data-draw="atualizado" data-source="base_unificada">—</span>
       </div>
       <div class="sr-ctl">
@@ -1305,6 +1314,14 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
         <div data-draw="anuncios" data-source="base_unificada"></div>
       </section>
 
+      <section class="sr-card sr-c12" id="custo">
+        <div class="sr-ch">
+          <h2 class="sr-h">Custo por vendedor</h2>
+          <span class="sr-hint">Quanto o investimento em tráfego custou em leads para cada SDR e cada closer, por campanha · clique num número para ver os leads</span>
+        </div>
+        <div data-draw="custo" data-source="base_unificada"></div>
+      </section>
+
       <section class="sr-card sr-c12" id="perdas">
         <div class="sr-ch">
           <h2 class="sr-h">Desqualificações e perdas</h2>
@@ -1347,8 +1364,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261124f"></script>
-<script src="xlsx.js?v=20261124f"></script>
+<script src="config.js?v=20261124g"></script>
+<script src="xlsx.js?v=20261124g"></script>
 <script>
 ['leads', 'reunioes', 'negocios', 'higiene'].forEach(function (id) {
   dash.loader(id, {
@@ -1490,8 +1507,9 @@ dash.calc('base_unificada', {
   }
 });
 </script>
-<script src="app.js?v=20261124f"></script>
-<script src="blocks.js?v=20261124f"></script>
+<script src="app.js?v=20261124g"></script>
+<script src="blocks.js?v=20261124g"></script>
+<script src="analises.js?v=20261124g"></script>
 
 </div>
 </body>
