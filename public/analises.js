@@ -389,9 +389,25 @@
   const MET_SDR = [['agendadas', 'Agendadas'], ['realizadas', 'Realizadas']];
   const MET_CLO = [['realizadas', 'Realizadas'], ['vendas', 'Vendas'], ['valor', 'Valor vendido']];
   const MET_TIME = [['leads', 'Leads'], ['agendadas', 'Agendadas'], ['realizadas', 'Realizadas'], ['vendas', 'Vendas'], ['valor', 'Valor vendido']];
-  function diasUteis(a, b) { const ok = (CFGX.metas || {}).diasUteis || [1, 2, 3, 4, 5]; let n = 0; for (let d = a; d <= b; d = S.addDias(d, 1)) if (ok.includes(S.parse(d).getDay())) n++; return n; }
+  /* metas: as cadastradas pelos administradores (site, /api/metas) ou, sem elas, as do config.js */
+  S.st.metasSrv = S.st.metasSrv || { estado: 'nada', dados: null };
+  function carregaMetasSrv() {
+    const m = S.st.metasSrv; if (m.estado !== 'nada') return; m.estado = 'carregando';
+    fetch('/api/metas', { credentials: 'same-origin', cache: 'no-store' })
+      .then(r => { const tp = r.headers.get('content-type') || ''; if (!r.ok || !tp.includes('json')) throw new Error('x'); return r.json(); })
+      .then(j => { m.estado = j.ok ? 'ok' : 'erro'; m.dados = j; dash.draw('metas'); })
+      .catch(() => { m.estado = 'indisponivel'; dash.draw('metas'); });
+  }
+  let MET_ATUAL = { M: {}, dias: null };
+  function metasDoMes(mes) {
+    const m = S.st.metasSrv;
+    if (m.estado === 'ok' && m.dados && m.dados.meses && m.dados.meses[mes]) return { fonte: 'srv', M: m.dados.meses[mes], dias: m.dados.diasUteis };
+    if (m.estado === 'ok') return { fonte: 'srv', M: {}, dias: m.dados.diasUteis };
+    return { fonte: 'cfg', M: CFGX.metas || {}, dias: (CFGX.metas || {}).diasUteis };
+  }
+  function diasUteis(a, b) { const ok = MET_ATUAL.dias || [1, 2, 3, 4, 5]; let n = 0; for (let d = a; d <= b; d = S.addDias(d, 1)) if (ok.includes(S.parse(d).getDay())) n++; return n; }
   function metaDe(papel, nome, k) {
-    const M = (CFGX.metas || {})[papel] || {};
+    const M = (MET_ATUAL.M || {})[papel] || {};
     if (papel === 'time') { const v = M[k]; return v > 0 ? Number(v) : null; }
     const norm = s => semAcento(S.limpa(s));
     const pessoa = Object.keys(M).find(x => x !== 'padrao' && norm(x) === norm(nome));
@@ -401,14 +417,16 @@
   dash.draw('metas', el => {
     const D = S.dados(), N = negocios();
     if (!D.ok || !N) { S.vazio(el, S.estado(D && D.ok ? dash.data('negocios') : D)); return; }
+    carregaMetasSrv();
     const q = S.per(), ref = S.parse(q.fim), mIni = S.iso(new Date(ref.getFullYear(), ref.getMonth(), 1)), mFim = S.iso(new Date(ref.getFullYear(), ref.getMonth() + 1, 0));
+    MET_ATUAL = metasDoMes(mIni.slice(0, 7));
     const hoje = S.hoje(), ate = hoje < mFim ? (hoje < mIni ? mIni : hoje) : mFim;
     const w = S.janela(mIni, ate), V = vendasEntre(mIni, ate) || { vendas: [], comValor: [], valor: 0 };
     const duTot = diasUteis(mIni, mFim), duPass = Math.max(1, diasUteis(mIni, ate)), fator = ate >= mFim ? 1 : duTot / duPass;
     const box = E('div', 'sr-nps');
-    const temMeta = !!CFGX.metas && ['sdr', 'closer', 'time'].some(p => { const o = CFGX.metas[p] || {}; return JSON.stringify(o).match(/:\s*[1-9]/); });
+    const temMeta = ['sdr', 'closer', 'time'].some(p => { const o = (MET_ATUAL.M || {})[p] || {}; return /:\s*[1-9]/.test(JSON.stringify(o)); });
     box.appendChild(E('p', 'sr-hint', `Mês de ${S.MESL[ref.getMonth()]} de ${ref.getFullYear()} · ${S.fInt(duPass)} de ${S.fInt(duTot)} dias úteis${ate >= mFim ? ' (mês fechado)' : ''} · projeção = ritmo de hoje até o fim do mês`));
-    if (!temMeta) box.appendChild(cardMetaX('Nenhuma meta cadastrada ainda.', 'Por enquanto a página mostra o realizado e a projeção do mês. Para comparar com a meta, me passe os números (do time, por SDR e por closer) que eu cadastro.'));
+    if (!temMeta) box.appendChild(cardMetaX('Nenhuma meta cadastrada para este mês.', MET_ATUAL.fonte === 'srv' || S.st.metasSrv.estado === 'carregando' ? 'Por enquanto a página mostra o realizado e a projeção do mês. Os administradores cadastram as metas em Usuários e metas (menu do seu nome, no rodapé da barra lateral) → Metas do mês.' : 'Por enquanto a página mostra o realizado e a projeção do mês. As metas são cadastradas no site do relatório, em Usuários e metas → Metas do mês.'));
     const calls = w.calls, real = calls.filter(r => r._g === 'realizada');
     const valTime = { leads: w.leads.length, agendadas: S.umPorLead(calls).length, realizadas: real.length, vendas: V.vendas.length, valor: V.valor };
     const rowsTime = { leads: [w.leads, 'l'], agendadas: [S.umPorLead(calls), 'c'], realizadas: [real, 'c'], vendas: [V.vendas, 'l', DC_VENDA], valor: [V.comValor, 'l', DC_VENDA] };

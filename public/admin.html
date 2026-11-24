@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Usuários · Relatório de Calls</title>
+<title>Usuários e metas · Relatório de Calls</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -40,14 +40,40 @@
   .tab .acoes{justify-content:flex-start}
   .tab td.ult{display:none}
 }
+[hidden]{display:none!important}
+.abas{display:flex;gap:4px;padding:4px;background:#fff;border:1px solid var(--borda);border-radius:10px;width:max-content;max-width:100%}
+.abas button{height:36px;padding:0 16px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:13.5px;font-weight:600;color:var(--txt2);cursor:pointer}
+.abas button[aria-selected="true"]{background:rgba(33,3,206,.08);color:var(--azul)}
+.abas button:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
+.mt-topo{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:6px}
+.mt-topo .campo{margin:0}
+.mt-topo .campo input{width:180px}
+.mt-dias{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:12px 0 4px}
+.mt-dias label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.mt-h{margin:22px 0 8px;font-size:14px;font-weight:700}
+.mt-time{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.mt-time .campo{margin:0}
+.tab input.mt{height:34px;width:100%;max-width:140px;padding:0 10px;border:1px solid var(--borda);border-radius:var(--r);font-size:13px;text-align:right;background:#fff}
+.tab input.mt:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(33,3,206,.15)}
+.tab th.n,.tab td.n{text-align:right}
+.tab tr.padrao td{background:#F7F8FC;font-weight:600}
+.mt-pe{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:18px}
+.mt-pe .info{font-size:12.5px;color:var(--txt2)}
+.mt-g2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width:900px){.mt-time{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-g2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header class="topo">
-  <div><img src="logo.png" alt="locagora"><div class="sub">Usuários do relatório</div></div>
+  <div><img src="logo.png" alt="locagora"><div class="sub">Usuários e metas do relatório</div></div>
   <a class="btn" href="/">Voltar ao relatório</a>
 </header>
 <main class="pag" style="max-width:1040px">
+  <div class="abas" role="tablist" aria-label="Administração">
+    <button type="button" role="tab" id="t-usuarios" aria-selected="true" aria-controls="p-usuarios">Usuários</button>
+    <button type="button" role="tab" id="t-metas" aria-selected="false" aria-controls="p-metas">Metas do mês</button>
+  </div>
+  <div id="p-usuarios" role="tabpanel" aria-labelledby="t-usuarios" class="pag">
   <form class="cartao" id="f-novo" novalidate>
     <h2>Adicionar pessoa</h2>
     <p class="desc">O sistema gera uma senha provisória. Passe para a pessoa; no primeiro acesso ela cria a senha dela.</p>
@@ -70,6 +96,25 @@
       <thead><tr><th>Pessoa</th><th>Perfil</th><th>Último acesso</th><th></th></tr></thead>
       <tbody id="lista"><tr><td colspan="4" class="vazio">Carregando…</td></tr></tbody>
     </table>
+  </section>
+  </div>
+
+  <section class="cartao" id="p-metas" role="tabpanel" aria-labelledby="t-metas" hidden>
+    <h2>Metas do mês</h2>
+    <p class="desc">As metas aparecem na página Metas do relatório. A meta "Padrão" vale para todo SDR ou closer sem meta própria. Deixe em branco para não ter meta.</p>
+    <div class="msg" id="msg-metas" role="alert"></div>
+    <div class="mt-topo">
+      <div class="campo"><label for="m-mes">Mês</label><input id="m-mes" type="month"></div>
+      <button class="btn sec" type="button" id="m-copiar">Copiar do mês anterior</button>
+    </div>
+    <div class="mt-dias" id="m-dias" aria-label="Dias que contam para a projeção"></div>
+    <h3 class="mt-h">Time</h3>
+    <div class="mt-time" id="m-time"></div>
+    <div class="mt-g2">
+      <div><h3 class="mt-h">SDRs</h3><table class="tab"><thead><tr><th>SDR</th><th class="n">Agendadas</th><th class="n">Realizadas</th></tr></thead><tbody id="m-sdr"></tbody></table></div>
+      <div><h3 class="mt-h">Closers</h3><table class="tab"><thead><tr><th>Closer</th><th class="n">Realizadas</th><th class="n">Vendas</th><th class="n">Valor (R$)</th></tr></thead><tbody id="m-closer"></tbody></table></div>
+    </div>
+    <div class="mt-pe"><span class="info" id="m-info"></span><button class="btn prim" type="button" id="m-salvar">Salvar metas</button></div>
   </section>
 </main>
 <script>
@@ -149,6 +194,94 @@
   });
 
   fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => { eu = j; carrega(); });
+})();
+/* ---------- abas e metas do mês ---------- */
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const msg = (t, tipo) => { const el = $('msg-metas'); el.textContent = t || ''; el.className = 'msg' + (t ? ' ' + (tipo || 'erro') : ''); };
+  function aba(qual) {
+    const m = qual === 'metas';
+    $('t-usuarios').setAttribute('aria-selected', String(!m)); $('t-metas').setAttribute('aria-selected', String(m));
+    $('p-usuarios').hidden = m; $('p-metas').hidden = !m;
+    try { history.replaceState(null, '', m ? '#metas' : '#usuarios'); } catch (e) { }
+    if (m && !carregado) carrega();
+  }
+  $('t-usuarios').onclick = () => aba('usuarios'); $('t-metas').onclick = () => aba('metas');
+  let carregado = false, dados = { meses: {}, diasUteis: [1, 2, 3, 4, 5] }, pessoas = [];
+  const TIME = [['leads', 'Leads'], ['agendadas', 'Agendadas'], ['realizadas', 'Realizadas'], ['vendas', 'Vendas'], ['valor', 'Valor vendido (R$)']];
+  const SDR = ['agendadas', 'realizadas'], CLO = ['realizadas', 'vendas', 'valor'];
+  const DIAS = [[1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb'], [0, 'Dom']];
+  const hoje = new Date(), mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+  const fmt = v => v == null || v === '' ? '' : String(v).replace('.', ',');
+  const lerNum = s => { s = String(s || '').trim(); if (!s) return null; const x = Number(s.replace(/\./g, '').replace(',', '.')); return isFinite(x) && x > 0 ? x : NaN; };
+  function inp(papel, nome, campo, v, ph) { return '<input class="mt" inputmode="decimal" data-p="' + papel + '" data-n="' + esc(nome) + '" data-c="' + campo + '" value="' + esc(fmt(v)) + '"' + (ph != null && ph !== '' ? ' placeholder="' + esc(fmt(ph)) + '"' : '') + ' aria-label="' + esc((nome === 'padrao' ? 'Padrão' : nome) + ' · ' + campo) + '">'; }
+  function desenha() {
+    const mes = $('m-mes').value || mesAtual, M = dados.meses[mes] || {};
+    $('m-dias').innerHTML = '<span style="font-weight:600">Dias úteis para a projeção:</span>' + DIAS.map(([d, t]) => '<label><input type="checkbox" value="' + d + '"' + ((dados.diasUteis || []).includes(d) ? ' checked' : '') + '>' + t + '</label>').join('');
+    const T = M.time || {};
+    $('m-time').innerHTML = TIME.map(([k, t]) => '<div class="campo"><label for="mt-' + k + '">' + t + '</label><input id="mt-' + k + '" class="mt" inputmode="decimal" data-p="time" data-n="time" data-c="' + k + '" value="' + esc(fmt(T[k])) + '" style="max-width:none;height:42px"></div>').join('');
+    const linhas = (papel, campos, lista) => {
+      const G = M[papel] || {}, P = G.padrao || {};
+      const nomes = lista.concat(Object.keys(G).filter(n => n !== 'padrao' && !lista.includes(n)));
+      return '<tr class="padrao"><td>Padrão (todos)</td>' + campos.map(c => '<td class="n">' + inp(papel, 'padrao', c, P[c]) + '</td>').join('') + '</tr>' +
+        nomes.map(n => '<tr><td>' + esc(n) + '</td>' + campos.map(c => '<td class="n">' + inp(papel, n, c, (G[n] || {})[c], P[c]) + '</td>').join('') + '</tr>').join('');
+    };
+    $('m-sdr').innerHTML = linhas('sdr', SDR, pessoas.filter(p => p.papel === 'sdr').map(p => p.nome));
+    $('m-closer').innerHTML = linhas('closer', CLO, pessoas.filter(p => p.papel === 'closer').map(p => p.nome));
+    $('m-info').textContent = dados.atualizado_em ? 'Última alteração em ' + new Date(dados.atualizado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + (dados.atualizado_por ? ' por ' + dados.atualizado_por : '') : 'Nenhuma meta cadastrada ainda.';
+  }
+  /* ao editar o padrão, atualiza a dica (placeholder) das pessoas */
+  document.addEventListener('input', ev => {
+    const i = ev.target; if (!i.matches || !i.matches('input.mt[data-n="padrao"]')) return;
+    document.querySelectorAll('input.mt[data-p="' + i.dataset.p + '"][data-c="' + i.dataset.c + '"]:not([data-n="padrao"])').forEach(x => { x.placeholder = i.value; });
+  });
+  async function carrega() {
+    carregado = true; msg('');
+    try {
+      const r = await fetch('/api/metas?pessoas=1', { credentials: 'same-origin', cache: 'no-store' });
+      if (r.status === 401) { location.replace('/login?volta=/admin%23metas'); return; }
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.erro || 'Não foi possível ler as metas.');
+      dados = j; pessoas = j.pessoas || [];
+      if (j.aviso) msg(j.aviso);
+      desenha();
+    } catch (e) { msg(e.message); }
+  }
+  function coleta() {
+    const metas = { time: {}, sdr: {}, closer: {} }; let erro = '';
+    document.querySelectorAll('#p-metas input.mt').forEach(i => {
+      const v = lerNum(i.value); if (v == null) return;
+      if (isNaN(v)) { erro = 'Valor inválido em ' + i.getAttribute('aria-label') + '.'; i.focus(); return; }
+      if (i.dataset.p === 'time') metas.time[i.dataset.c] = v;
+      else { const g = metas[i.dataset.p]; (g[i.dataset.n] = g[i.dataset.n] || {})[i.dataset.c] = v; }
+    });
+    const dias = [...document.querySelectorAll('#m-dias input:checked')].map(x => Number(x.value));
+    return { metas, dias, erro };
+  }
+  $('m-mes').value = mesAtual;
+  $('m-mes').addEventListener('change', () => { msg(''); desenha(); });
+  $('m-copiar').onclick = () => {
+    const [y, m] = ($('m-mes').value || mesAtual).split('-').map(Number), d = new Date(y, m - 2, 1);
+    const ant = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (!dados.meses[ant]) { msg('Não há metas cadastradas em ' + ant.split('-').reverse().join('/') + '.'); return; }
+    dados.meses[$('m-mes').value] = JSON.parse(JSON.stringify(dados.meses[ant])); desenha();
+    msg('Metas de ' + ant.split('-').reverse().join('/') + ' copiadas. Confira e clique em Salvar metas.', 'ok');
+  };
+  $('m-salvar').onclick = async () => {
+    const mes = $('m-mes').value; if (!mes) return msg('Escolha o mês.');
+    const c = coleta(); if (c.erro) return msg(c.erro);
+    if (!c.dias.length) return msg('Marque pelo menos um dia útil.');
+    const b = $('m-salvar'); b.disabled = true; msg('');
+    try {
+      const r = await fetch('/api/metas', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mes, metas: c.metas, diasUteis: c.dias }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.erro || 'Não foi possível salvar.');
+      carregado = false; await carrega(); $('m-mes').value = mes; desenha();
+      msg('Metas de ' + mes.split('-').reverse().join('/') + ' salvas. Já aparecem no relatório.', 'ok');
+    } catch (e) { msg(e.message); }
+    b.disabled = false;
+  };
+  if (location.hash === '#metas') aba('metas');
 })();
 </script>
 </body>

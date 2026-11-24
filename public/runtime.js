@@ -139,7 +139,7 @@
     const who = document.createElement('div'); who.className = 'who'; const bn = document.createElement('b'); bn.textContent = eu.nome || ''; who.append(bn, document.createTextNode(eu.email));
     const link = (txt, href, cls) => { const a = document.createElement('a'); a.href = href; a.textContent = txt; a.setAttribute('role', 'menuitem'); if (cls) a.className = cls; return a; };
     m.append(who, link('Trocar senha', '/senha'));
-    if (eu.papel === 'admin') m.append(link('Gerenciar usuários', '/admin'));
+    if (eu.papel === 'admin') m.append(link('Usuários e metas', '/admin'));
     m.append(link('Sair', '/api/logout', 'sair'));
     const abre = v => { m.hidden = !v; b.setAttribute('aria-expanded', String(v)); };
     b.addEventListener('click', e => { e.stopPropagation(); abre(m.hidden); });

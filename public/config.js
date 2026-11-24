@@ -47,7 +47,8 @@ window.SR_CONFIG = {
      Call sem link cujo lead/oportunidade está com eles conta em "Sem closer". */
   closersIgnorados: ['Arthur Parentoni', 'Bruno Vieira'],
 
-  /* Metas do mês (página Metas). Deixe null para não ter meta.
+  /* Metas do mês (página Metas). No site, os administradores cadastram as metas em Usuários e metas → Metas do mês
+     e elas valem no lugar destas. Estas ficam só para a versão do claude.ai. Deixe null para não ter meta.
      "padrao" vale para todo mundo do papel; um nome (como aparece no CRM) substitui o padrão.
      Exemplo: sdr: { padrao: { agendadas: 60, realizadas: 40 }, 'Kamylle Cruz': { agendadas: 70 } } */
   metas: {
