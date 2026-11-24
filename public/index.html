@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0256C6">
-<link rel="stylesheet" href="fonts.css?v=20261124c">
+<link rel="stylesheet" href="fonts.css?v=20261124d">
 <style>
 :root{--font-anthropic-sans:'Manrope',system-ui,sans-serif}
 html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
@@ -226,7 +226,7 @@ html,body{margin:0;padding:0;background:#F6F7F9;font-family:'Manrope',system-ui,
 @media (max-width:1100px){#anuncios .sr-rkcri{overflow-x:auto}#anuncios .sr-rkcri table{table-layout:auto;min-width:1000px}}
 </style>
 <script src="d3.min.js"></script>
-<script src="runtime.js?v=20261124c"></script>
+<script src="runtime.js?v=20261124d"></script>
 </head>
 <body>
 <div id="dash-root">
@@ -1247,8 +1247,8 @@ html:has(.sr.escuro),body:has(.sr.escuro),#dash-root:has(.sr.escuro){background:
   <aside class="sr-side" data-draw="painel" data-source="base_unificada" aria-label="Filtros" hidden></aside>
 </div>
 
-<script src="config.js?v=20261124c"></script>
-<script src="xlsx.js?v=20261124c"></script>
+<script src="config.js?v=20261124d"></script>
+<script src="xlsx.js?v=20261124d"></script>
 <script>
 ['leads', 'reunioes', 'negocios'].forEach(function (id) {
   dash.loader(id, {
@@ -1376,19 +1376,22 @@ dash.calc('base_unificada', {
     for (const r of R.values()) {
       const l = L.get(r.lead_id) || {};
       const o = O.get(r.oportunidade_id) || O.get(l.oportunidade_id) || maisRecente.get(r.lead_id) || {};
-      out.push(linha(l, r, o)); comReuniao.add(r.lead_id);
+      /* no_funil: o lead só conta na contagem de leads se estiver no funil SDR ou CLOSER */
+      const x = linha(l, r, o); x.no_funil = noFunil.has(r.lead_id) ? 'sim' : 'não';
+      out.push(x); comReuniao.add(r.lead_id);
     }
     for (const l of L.values()) {
       if (comReuniao.has(l.lead_id) || !noFunil.has(l.lead_id)) continue;
       const o = O.get(l.oportunidade_id) || maisRecente.get(l.lead_id) || {};
-      out.push(linha(l, null, o));
+      const x = linha(l, null, o); x.no_funil = 'sim';
+      out.push(x);
     }
     return out;
   }
 });
 </script>
-<script src="app.js?v=20261124c"></script>
-<script src="blocks.js?v=20261124c"></script>
+<script src="app.js?v=20261124d"></script>
+<script src="blocks.js?v=20261124d"></script>
 
 </div>
 </body>

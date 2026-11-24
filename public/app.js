@@ -77,7 +77,8 @@ window.SR = (function () {
     calls.forEach(o => { o._k = {}; for (const k in DIMS) o._k[k] = chave(k, o, 'c'); });
     /* um lead = a linha da sua call mais recente (ou a linha sem call) */
     const ml = new Map();
-    for (const r of rows) { if (!r.lead_id) continue; const a = ml.get(r.lead_id); if (!a || (r.tem_reuniao === 'sim' && (a.tem_reuniao !== 'sim' || r._d > a._d))) ml.set(r.lead_id, r); }
+    /* só conta lead que está no funil SDR ou CLOSER (pipeline em branco ou de outro funil fica de fora) */
+    for (const r of rows) { if (!r.lead_id || r.no_funil === 'não') continue; const a = ml.get(r.lead_id); if (!a || (r.tem_reuniao === 'sim' && (a.tem_reuniao !== 'sim' || r._d > a._d))) ml.set(r.lead_id, r); }
     const leads = [...ml.values()].map(r => { const o = Object.assign({}, r); o._ld = dia(r.data_entrada); o._k = {}; for (const k in DIMS) o._k[k] = chave(k, o, 'l'); return o; });
     const porLead = d3.group(calls, r => r.lead_id);
     const rot = {};
