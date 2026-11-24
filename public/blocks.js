@@ -71,12 +71,11 @@
       geral: ['progressao', 'geral', 'leads-periodo', 'leads-camp'],
       vendas: ['vendas'],
       conversao: ['conversao'],
-      saude: ['saude'],
+      saude: ['saude', 'alertas'],
       'leads-sdr': ['leads-sdr'],
       perdas: ['perdas', 'motivos'],
       'ranking-tags': ['ranking-tags', 'ranking-sdrs', 'ranking-closers'],
       'gravacoes-pendentes': ['gravacoes-pendentes', 'nps-closer', 'higiene'],
-      alertas: ['alertas'],
       metas: ['metas'],
       noshow: ['noshow'],
       ciclo: ['ciclo'],
@@ -1810,9 +1809,10 @@
       b.addEventListener('click', () => S.abrir({ titulo: tit, rows, kind, cols })); ks.appendChild(b);
     };
     const semSdr = L.filter(l => l._k.sdr === S.SEMK);
-    kpi('Leads sem SDR', S.fInt(semSdr.length), S.fP(S.pct(semSdr.length, L.length)) + ' dos leads do período', semSdr, 'Leads sem SDR responsável', 'l', DC_LEAD, semSdr.length ? 'alerta' : '', 'Leads que entraram e não têm SDR responsável no CRM');
+    /* leads sem SDR e leads parados ficam só na Central de alertas, logo abaixo */
+    if (false) kpi('Leads sem SDR', S.fInt(semSdr.length), S.fP(S.pct(semSdr.length, L.length)) + ' dos leads do período', semSdr, 'Leads sem SDR responsável', 'l', DC_LEAD, semSdr.length ? 'alerta' : '', 'Leads que entraram e não têm SDR responsável no CRM');
     const parados = L.filter(l => { if (S.norm(l.status_lead) !== 'aberto') return false; const e = S.norm(l.etapa_atual); if (['desqualificado', 'negocio perdido', 'negocio vendido'].includes(e)) return false; const d = S.difDias(l.data_ultima_movimentacao || l.data_entrada, agora); l._parado = d; return d != null && d >= 3; });
-    kpi('Leads parados há 3+ dias', S.fInt(parados.length), 'em aberto, sem movimentação', parados, 'Leads parados há 3 dias ou mais', 'l', DC_LEAD.concat(['dias_parado']), parados.length ? 'alerta' : '', 'Oportunidades em aberto cuja última movimentação foi há 3 dias ou mais');
+    if (false) kpi('Leads parados há 3+ dias', S.fInt(parados.length), 'em aberto, sem movimentação', parados, 'Leads parados há 3 dias ou mais', 'l', DC_LEAD.concat(['dias_parado']), parados.length ? 'alerta' : '', 'Oportunidades em aberto cuja última movimentação foi há 3 dias ou mais');
     const comOpp = L.filter(l => S.limpa(l.etapa_atual));
     const quali = comOpp.filter(l => ETAPAS_QUALI.includes(S.norm(l.etapa_atual)) || (D.porLead.get(l.lead_id) || []).length);
     kpi('Taxa de qualificação', S.fP(S.pct(quali.length, comOpp.length)), `${S.fInt(quali.length)} de ${S.fInt(comOpp.length)} oportunidades`, quali, 'Leads qualificados ou com call', 'l', DC_LEAD, '', 'Dos leads do período que viraram oportunidade, quantos chegaram a Qualificado ou além (ou tiveram call)');
